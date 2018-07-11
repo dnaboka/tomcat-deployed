@@ -1,0 +1,45 @@
+<div class="section">
+    <span class="dashletHyperlinks">
+        <span class="wrap title">{{-i18n["dashboard.component.dialog.properties." + model.type + ".hyperlinks"] || i18n["dashboard.component.dialog.properties.chart.hyperlinks"]}}</span>
+
+        <label class="control checkBox">
+            <span class="wrap">{{-i18n["dashboard.component.dialog.properties." + model.type + ".hyperlinks.enable"] || i18n["dashboard.component.dialog.properties.chart.hyperlinks.enable"]}}</span>
+            <input name="disableDefaultInteractivity" data-bind="checked:exposeOutputsToFilterManager" type="checkbox"/>
+            <span class="message warning"></span>
+        </label>
+
+        <label class="control dashletHyperlinksAction">
+            <span class="wrap">{{-i18n["dashboard.component.dialog.properties.hyperlinks.action"]}}</span>
+            <select data-bind="value:dashletHyperlinkTarget,enabled:exposeOutputsToFilterManager">
+                <option value="">{{-i18n["dashboard.component.dialog.properties.hyperlinks.update.dashboard"]}}</option>
+                <option value="Blank">{{-i18n["dashboard.component.dialog.properties.hyperlinks.new.window"]}}</option>
+                <option value="Self">{{-i18n["dashboard.component.dialog.properties.hyperlinks.current.window"]}}</option>
+            </select>
+            <span class="message warning"></span>
+        </label>
+
+        <label class="control url" data-bind="validationErrorClass:dashletHyperlinkUrl,slide:dashletHyperlinkUrlVisible">
+            <span class="wrap title">{{-i18n["dashboard.component.dialog.properties.hyperlinks.url"]}}</span>
+            <div class="browsableInput">
+                <input data-bind="value:parameters,enabled:exposeOutputsToFilterManager,events:['input']" type="text" data-jrs-parameterized-input/>
+                <button class="button action showRepositoryChooserDialog">
+                    <span class="wrap">{{- i18n["dashboard.component.dialog.properties.hyperlinks.browse.repository"] }}<span class="icon"></span></span>
+                </button>
+            </div>
+            <span class="wrap hint">{{-i18n["dashboard.component.dialog.properties.hyperlinks.url.hint"]}}</span>
+            <span class="message warning" data-bind="validationErrorText:dashletHyperlinkUrl"></span>
+        </label>
+
+        <div>
+            <span class="wrap title">{{-i18n["dashboard.component.dialog.properties.available.parameters"]}}</span>
+        </div>
+
+        <ul class="availableParametersList"></ul>
+
+        <div class="hyperlinkParametersContainer"></div>
+
+        <button class="button action up showGoToFilterManagerConfirmationDialog" data-bind="enabled:exposeOutputsToFilterManager">
+            <span class="wrap">{{- i18n["dashboard.component.dialog.properties.hyperlinks.go.to.filter.manager"] }}<span class="icon"></span></span>
+        </button>
+    </span>
+</div>

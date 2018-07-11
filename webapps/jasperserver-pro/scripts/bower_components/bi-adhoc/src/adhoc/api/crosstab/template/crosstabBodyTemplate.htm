@@ -1,0 +1,25 @@
+{{ var hyperlinksClass = hyperlinks ? "jr-jHyperLink jr-jHyperLink-body" : ""}}
+
+<tbody class="jr-mDatatable-body jr">
+
+{{_.each(data, function(row, y) { }}
+<tr class="jr-mDatatable-row {{= row.totalRow ? 'jr-mDatatable-rowTotal' : 'jr-mDatatable-rowValue'}} {{= row.lastRowValue ? 'jr-mDatatable-rowValueLast' : ''}} {{= (y%2 == 0) ? 'jr-mDatatable-rowOdd' : 'jr-mDatatable-rowEven'}} jr">
+    {{_.each(row, function(cell, x) { }}
+    {{ if (cell) { }}
+    <td class="jr-mDatatable-cell jr-mDatatable-cellValue {{= cell.isTotal || row.totalRow ? 'jr-mDatatable-cellTotal' : ''}} {{= cell.className || ''}} jr {{= hyperlinksClass }}"
+        data-row-index="{{=y}}"
+        data-column-index="{{=x}}"
+        colspan="{{=cell.colspan}}" rowspan="{{=cell.rowspan}}"
+        title="{{- cell.label }}">
+        <div class="jr-mDatatable-cell-wrapper jr">
+            <div class="jr {{- cellTypesFactory(cell.aggregationType) }}">
+                {{- cell.label }}
+            </div>
+        </div>
+    </td>
+    {{ } }}
+    {{ }); }}
+</tr>
+{{ }); }}
+
+</tbody>

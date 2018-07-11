@@ -1,0 +1,41 @@
+<div class="jr-mInput jr-mInputControlMultiSelectCheckbox jr">
+    <fieldset class="jr" title="{{description}}">
+        <legend class="jr-mInput-label {{#mandatory}} jr-mInput-labelRequired {{/mandatory}} jr">{{label}}
+        </legend>
+        <div class="jr-mInput-set jr">
+            <ul class="jr-mInput-checkContainer jr">
+                {{#data}}
+                <li class="jr-mInput-check jr">
+                    <input class="jr-mInput-check-box jr" id="{{uuid}}" type="checkbox" value="{{value}}" {{#readOnly}}disabled="disabled"{{/readOnly}} {{#selected}}checked="checked"{{/selected}} >
+                    <label class="jr-mInput-check-label jr" for="{{uuid}}">{{label}}</label>
+                </li>
+                {{/data}}
+            </ul>
+        </div>
+        <div class="jr-mInput-buttonContainer jr">
+            <ul class="jr-mItemselector jr">
+                <li  title="{{selectAllMsg}}" class="jr-mItemselector-button jr-uWidth-30pc jr jr-jSelectAll">
+                    <span class="jr-mItemselector-button-icon jr-mIcon jr-mIconSmall jr-checkmark jr"></span>
+                    <a class="jr-mItemselector-button-label jr">
+                        <span class="jr">{{selectAllMsg}}</span>
+                    </a>
+                </li>
+
+                <li  title="{{selectNoneMsg}}" class="jr-mItemselector-button jr-uWidth-30pc jr jr-jSelectNone">
+                    <span class="jr-mItemselector-button-icon jr-mIcon jr-mIconSmall jr-cancel jr"></span>
+                    <a class="jr-mItemselector-button-label jr">
+                        <span class="jr">{{selectNoneMsg}}</span>
+                    </a>
+                </li>
+
+                <li  title="{{selectInverseMsg}}" class="jr-mItemselector-button jr-uWidth-40pc jr jr-jInvert">
+                    <span class="jr-mItemselector-button-icon jr-mIcon jr-mIconSmall jr-invert jr"></span>
+                    <a class="jr-mItemselector-button-label jr">
+                        <span class="jr">{{selectInverseMsg}}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </fieldset>
+    <span class="jr-mInput-alert jr jr-isInvisible">{{message}}</span>
+</div>

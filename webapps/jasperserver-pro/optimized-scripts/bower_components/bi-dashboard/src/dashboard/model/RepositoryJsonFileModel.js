@@ -1,0 +1,1 @@
+define(["require","bi/repository/model/RepositoryFileModel","bi/repository/enum/repositoryFileTypes","underscore"],function(e){"use strict";var r=e("bi/repository/model/RepositoryFileModel"),o=e("bi/repository/enum/repositoryFileTypes"),t=e("underscore");return r.extend({stringifyContent:!0,defaults:function(){return t.extend({},r.prototype.defaults,{type:o.JSON})}()})});

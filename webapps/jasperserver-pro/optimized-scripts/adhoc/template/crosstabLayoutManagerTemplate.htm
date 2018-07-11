@@ -1,0 +1,14 @@
+{{ _.each(data, function(dim) { }}
+<li class="{{- dim.liClass}} draggable" data-dimension="{{- dim.name}}" style="z-index: 800">
+    {{ if (dim.measureHandle === "handle") { }} <span class="handle">&nbsp;</span> {{ } }}
+    <span class='title'>{{- dim.name}}</span>
+    <ul class="{{- dim.ulClass}}">
+        {{ _.each(dim.levels, function(level) { }}
+        <li id="{{- level.cid}}" class='{{- level.levelClass}} button' style='z-index: 800;' data-level='{{- level.name}}' data-dimension='{{- dim.name}}'>
+            <span class='wrap' title="{{- level.label }}">{{- level.label }}</span>
+            <span class='icon remove'></span>
+        </li>
+        {{ }); }}
+    </ul>
+</li>
+{{ }); }}

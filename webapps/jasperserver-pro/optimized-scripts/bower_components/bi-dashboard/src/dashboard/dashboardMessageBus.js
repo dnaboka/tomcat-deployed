@@ -1,0 +1,1 @@
+define(["require","backbone","underscore"],function(e){"use strict";var n=e("backbone"),r=e("underscore");return r.extend({},n.Events)});

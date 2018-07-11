@@ -1,0 +1,1 @@
+define(["require","./dashboardHyperlinkHandlerReference"],function(e){"use strict";var n=e("./dashboardHyperlinkHandlerReference");return{events:{click:function(e,r,i){n.events.click.apply(this,arguments)}}}});

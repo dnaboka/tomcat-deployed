@@ -1,0 +1,1 @@
+define(["require","common/util/classUtil"],function(n){var i=n("common/util/classUtil");return i.extend({autowire:function(n,i,t){},unwire:function(n){}})});

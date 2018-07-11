@@ -1,0 +1,1 @@
+define(["require","jquery","./fixfields/view/FixFieldsDialogView"],function(i){"use strict";function e(){var i=new n;i.open()}var n=(i("jquery"),i("./fixfields/view/FixFieldsDialogView"));i(["!domReady"],function(){e()})});

@@ -1,0 +1,29 @@
+    {{ var hyperlinksClass = hyperlinks ? "jr-jHyperLink jr-jHyperLink-rowHeader" : ""}}
+    <tbody class="jr-mDatatable-body jr">
+
+    {{_.each(data, function(row, y, rows) { }}
+    <tr class="jr-mDatatable-row jr {{= (y%2 == 0) ? 'jr-mDatatable-rowOdd' : 'jr-mDatatable-rowEven'}} {{= row.totalRow ? 'jr-mDatatable-rowTotal' : ''}}  {{= row.rowSingleMember ? 'jr-mDatatable-rowGroupSinglemember' : ''}} {{= row.rowGroup ? 'jr-mDatatable-rowGroup' : ''}} {{= row.rowMember ? 'jr-mDatatable-rowMember' : ''}} {{= row.rowMemberLast ? 'jr-mDatatable-rowMemberLast' : ''}}">
+        {{_.each(row, function(cell, x) { }}
+        {{ if (cell) { }}
+        <td class="jr-mDatatable-cell jr-mDatatable-cellRowlabel jr {{= cell.isTotal && row.totalRow ? ' jr-mDatatable-cellTotal' : cell.isMeasure ? 'jr-mDatatable-cellMeasure' : 'jr-mDatatable-cellField'}} {{= hyperlinksClass }}"
+            colspan="{{=cell.colspan}}"
+            rowspan="{{=cell.rowspan}}"
+            data-local-index="{{=y}}"
+            data-local-depth="{{=x}}"
+            title="{{- cell.label }}">
+            <div class="jr-mDatatable-cell-wrapper jr">
+                <div class="jr-mDatatable-cell-text jr">
+                    {{ if (cell.isExpanded || cell.isCollapsed ) { }}
+                    <span class="jr-mDatatable-cell-expander jr-mIcon jr {{= cell.isExpanded ? 'jr-isExpanded' : ''}} {{= cell.isCollapsed ? 'jr-isCollapsed' : ''}}"
+                          {{= cell.expId ? 'data-expansion-id="' + cell.expId + '"' : ''}}></span>
+                    {{ } }}
+                    {{- cell.label }}
+                </div>
+            </div>
+        </td>
+        {{ } }}
+        {{ }); }}
+    </tr>
+    {{ }); }}
+
+    </tbody>

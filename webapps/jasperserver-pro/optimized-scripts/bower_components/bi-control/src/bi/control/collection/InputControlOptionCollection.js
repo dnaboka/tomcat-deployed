@@ -1,0 +1,1 @@
+define(["require","exports","module","backbone","logger","../model/InputControlOptionModel"],function(e,o,n){"use strict";var t=e("backbone"),l=e("logger").register(n),i=e("../model/InputControlOptionModel");return t.Collection.extend({model:i,initialize:function(){this.on("all",l.debug,l)}})});

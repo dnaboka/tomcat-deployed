@@ -1,0 +1,12 @@
+<div class="section">
+    <label class="control scaleToFitProperty" data-bind="toggle:not(adHocChart)">
+        <span class="wrap title">{{-i18n["dashboard.component.dialog.properties.scale.to.fit"]}}</span>
+        <select name="scaleToFit" data-bind="value:scaleStrategy(scaleToFit)">
+            <option value="1">{{-i18n["dashboard.component.dialog.properties.scale.to.fit.no"]}}</option>
+            <option value="width">{{-i18n["dashboard.component.dialog.properties.scale.to.fit.width"]}}</option>
+            <option value="height">{{-i18n["dashboard.component.dialog.properties.scale.to.fit.height"]}}</option>
+            <option value="container">{{-i18n["dashboard.component.dialog.properties.scale.to.fit.page"]}}</option>
+        </select>
+        <span class="message warning"></span>
+    </label>
+</div>

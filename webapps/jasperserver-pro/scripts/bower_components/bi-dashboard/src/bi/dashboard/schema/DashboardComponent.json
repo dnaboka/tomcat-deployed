@@ -1,0 +1,81 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "description": "Dashboard component properties",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique ID of dashboard component",
+      "readOnly": true
+    },
+    "name": {
+      "type": "string",
+      "description": "Unique name of dashboard component",
+      "readOnly": true
+    },
+    "type": {
+      "oneOf": ["reportUnit", "adhocDataView", "inputControl", "filterGroup", "webPageView", "text", "crosstab", "chart", "table", "value"],
+      "description": "Type of dashboard component",
+      "readOnly": true
+    },
+    "resource": {
+      "type": ["string", "null"],
+      "description": "Resource URI. Null if component has no resource.",
+      "readOnly": true
+    },
+    "position": {
+      "type": ["object", "null"],
+      "description": "Dashlet position on canvas in abstract units. Null for non-dashlets",
+      "readOnly": true,
+      "properties": {
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dashlet X coordinate from top left corner of canvas"
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dashlet Y coordinate from top left corner of canvas"
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dashlet width"
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Dashlet height"
+        }
+      }
+    },
+    "toolbar": {
+      "type": ["boolean", "object", "null"],
+      "description": "Whether dashlet toolbar should be shown. Works only if component is a dashlet and can have toolbar. In other cases value is null and cannot be changed",
+      "properties": {
+        "maximize": {
+          "type": "boolean",
+          "description": "Whether maximize button should be shown in dashlet toolbar."
+        },
+        "refresh": {
+          "type": "boolean",
+          "description": "Whether refresh button should be shown in dashlet toolbar."
+        }
+      }
+    },
+    "interactive": {
+      "type": "boolean",
+      "description": "Enabled/disabled interactivity on particular component",
+      "default": true
+    },
+    "maximized": {
+      "type": ["boolean", "null"],
+      "description": "Maximized/minimized state of a component. Works only if component is a dashlet. In other cases value is null and cannot be changed"
+    },
+    "pagination": {
+      "type": ["boolean", "null"],
+      "description": "Show/hide pagination control for visualizations. Control will be hidden in any case if visualization has only one page"
+    }
+  }
+}

@@ -1,0 +1,1 @@
+define(["require","commons.main","dataChooser/main/displayMain"],function(a){"use strict";a("commons.main"),a("dataChooser/main/displayMain")});

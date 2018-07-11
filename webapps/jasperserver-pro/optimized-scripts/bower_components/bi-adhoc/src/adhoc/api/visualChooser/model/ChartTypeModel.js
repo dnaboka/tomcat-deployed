@@ -1,0 +1,1 @@
+define(["require","exports","module","underscore","backbone","logger"],function(e,i,o){"use strict";var r=(e("underscore"),e("backbone"));e("logger").register(o);return r.Model.extend({defaults:{id:void 0,name:void 0,highchartsName:void 0,legacyAdhoc:void 0,cssClass:void 0,bundleName:void 0,isTimeSeries:!1},initialize:function(){}})});

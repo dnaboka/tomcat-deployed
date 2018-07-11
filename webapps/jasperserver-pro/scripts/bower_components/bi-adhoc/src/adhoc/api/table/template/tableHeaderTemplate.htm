@@ -1,0 +1,16 @@
+<thead class="jr-mDatatable-header jr">
+    <tr class="jr-mDatatable-row jr">
+        {{ _.each(header, function(cell, x) { }}
+        <th scope="row" class="jr-mDatatable-cell jr jr-jHyperLink"
+            data-column-index="{{=x}}"
+            data-hyperlink-id="{{='h_'+x}}"
+            {{= widths[x] ? 'style="max-width:' + widths[x] + 'px;"' : ''}}>
+            <div class="jr-mDatatable-cell-wrapper jr" {{= widths[x] ? 'style="width:' + widths[x] + 'px;"' : ''}}">
+                <div class="jr {{- cellTypesFactory(cell.hyperlink.column ? cell.hyperlink.column.type : '') }}">
+                    {{- cell.label }}
+                </div>
+            </div>
+        </th>
+        {{ }); }}
+    </tr>
+</thead>

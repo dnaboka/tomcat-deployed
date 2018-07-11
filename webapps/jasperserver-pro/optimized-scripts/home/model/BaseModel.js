@@ -1,0 +1,1 @@
+define(["require","backbone","home/connectivity/trait/BackboneSyncTrait"],function(e){"use strict";var n=e("backbone"),t=e("home/connectivity/trait/BackboneSyncTrait");return n.Model.extend(t)});

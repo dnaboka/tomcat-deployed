@@ -1,0 +1,1 @@
+define(["require","common/bi/error/biComponentErrorFactory","./InputControlsValidationError"],function(r){"use strict";var o=r("common/bi/error/biComponentErrorFactory"),n=r("./InputControlsValidationError");return o.inputControlsValidationError=function(r){return new n(r)},o});

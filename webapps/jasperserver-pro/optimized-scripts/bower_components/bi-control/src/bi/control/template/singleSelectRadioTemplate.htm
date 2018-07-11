@@ -1,0 +1,16 @@
+<div class="jr-mInput jr-mInputControlSingleSelectRadio jr">
+    <fieldset class="jr">
+        <legend class="jr-mInput-label {{#mandatory}} jr-mInput-labelRequired {{/mandatory}} jr">{{label}}</legend>
+        <div class="jr-mInput-set jr">
+            <ul class="jr-mInput-radioContainer jr">
+                {{#data}}
+                <li class="jr-mInput-radio jr">
+                    <input class="jr-mInput-radio-button jr" id="{{uuid}}" type="radio" name="{{name}}" value="{{value}}" {{#readOnly}}disabled="disabled"{{/readOnly}} {{#selected}}checked="checked"{{/selected}} />
+                    <label class="jr-mInput-radio-label jr" for="{{uuid}}" title="{{description}}">{{label}}</label>
+                </li>
+                {{/data}}
+            </ul>
+        </div>
+    </fieldset>
+    <span class="jr-mInput-alert jr jr-isInvisible">{{message}}</span>
+</div>

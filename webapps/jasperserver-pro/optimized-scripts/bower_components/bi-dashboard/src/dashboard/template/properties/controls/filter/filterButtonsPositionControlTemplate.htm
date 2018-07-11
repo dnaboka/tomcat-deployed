@@ -1,0 +1,10 @@
+<div class="section">
+    <span class="control buttonsPositionProperty" data-bind="validationErrorClass:buttonsPosition">
+        <span class="wrap">{{-i18n["dashboard.component.dialog.properties.filter.buttons.position"]}}</span>
+        <select name="buttonsPosition" data-bind="disabled:floating,value:buttonsPosition">
+            <option value="bottom">{{-i18n["dashboard.component.filter.group.component.buttons.position.bottom"]}}</option>
+            <option value="right">{{-i18n["dashboard.component.filter.group.component.buttons.position.right"]}}</option>
+        </select>
+        <span class="message warning" data-bind="validationErrorText:buttonsPosition"></span>
+    </span>
+</div>

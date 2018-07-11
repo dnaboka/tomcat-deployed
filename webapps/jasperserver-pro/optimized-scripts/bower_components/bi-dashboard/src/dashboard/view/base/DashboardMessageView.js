@@ -1,0 +1,1 @@
+define(["require","backbone","text!../../template/dashboardMessageTemplate.htm"],function(e){"use strict";var t=e("backbone"),s=e("text!../../template/dashboardMessageTemplate.htm");return t.View.extend({el:s,show:function(e){this.$el.removeClass("hidden").show().find(".message").html(e)},hide:function(){this.$el.addClass("hidden").hide()}})});

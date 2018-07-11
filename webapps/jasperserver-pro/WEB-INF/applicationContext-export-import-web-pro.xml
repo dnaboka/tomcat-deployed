@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
+    <bean id="multiTenancyExportImportModuleRegister" scope="prototype"
+          class="com.jaspersoft.jasperserver.export.modules.ModuleRegisterImpl">
+        <property name="exporterModules">
+            <list>
+                <ref bean="multiTenancyTenantExporter"/>
+                <ref bean="multiTenancyAuthorityExporter"/>
+                <ref bean="multiTenancyResourceExporter"/>
+                <ref bean="calendarsExporterModule"/>
+                <ref bean="reportOptionsJobsExporterModule"/>
+                <ref bean="accessEventsExporterModule"/>
+                <ref bean="auditEventsExporterModule"/>
+                <ref bean="reportMonitoringFactsExporter"/>
+            </list>
+        </property>
+        <property name="importerModules">
+            <list>
+                <ref bean="multiTenancyTenantImporter"/>
+                <ref bean="multiTenancyAuthorityImporter"/>
+                <ref bean="resourceImporterWithAdhocUpgrade"/>
+                <ref bean="calendarsImporterModule"/>
+                <ref bean="multiTenancyReportJobsImporter"/>
+                <ref bean="accessEventsImporterModule"/>
+                <ref bean="auditEventsImporterModule"/>
+                <ref bean="reportMonitoringFactsImporter"/>
+            </list>
+        </property>
+    </bean>
+
+    <!-- multi tenancy importers -->
+
+    <bean id="multiTenancyTenantExporter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyTenantExporter"
+          parent="tenantExporterModule" scope="prototype">
+        <property name="configuration">
+            <ref bean="multiTenancyExportConfiguration"/>
+        </property>
+    </bean>
+
+    <bean id="multiTenancyTenantImporter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyTenantImporter"
+          parent="tenantImporterModule" scope="prototype">
+        <property name="tenantImportMergeUtil" ref="tenantImportMergeUtil"/>
+        <property name="createCopyForNonUniqueTenantIds" value="true"/>
+        <property name="multiTenancyService" ref="multiTenancyService"/>
+        <property name="pathTransformer" ref="pathTransformer"/>
+    </bean>
+
+    <bean id="importerPrototypePro" class="com.jaspersoft.jasperserver.multipleTenancy.export.ImporterImplPro"
+          parent="importerPrototype" scope="prototype">
+        <property name="tenantImportMergeUtil" ref="tenantImportMergeUtil"/>
+    </bean>
+
+    <bean id="tenantImportMergeUtil"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.TenantImportMergeUtil">
+        <property name="tenantServiceUnsecured" ref="tenantService"/>
+        <property name="tenantModuleConfiguration" ref="tenantModuleConfiguration"/>
+        <property name="multiTenancyConfiguration" ref="multiTenancyConfiguration"/>
+        <property name="themePropagator" ref="proThemePropagator"/>
+        <property name="configurationBean" ref="configurationBean" />
+    </bean>
+
+    <bean id="multiTenancyAuthorityExporter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyAuthorityExporter"
+          parent="authorityExporterModule" scope="prototype">
+        <property name="configuration">
+            <ref bean="multiTenancyAuthorityModuleConfiguration"/>
+        </property>
+    </bean>
+
+    <bean id="multiTenancyAuthorityImporter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyAuthorityImporter"
+          parent="authorityImporterModule" scope="prototype">
+        <property name="configuration">
+            <ref bean="multiTenancyAuthorityModuleConfiguration"/>
+        </property>
+        <property name="mtconverter" ref="MTConverter"/>
+        <property name="tenantImportMergeUtil" ref="tenantImportMergeUtil"/>
+    </bean>
+
+
+    <bean id="multiTenancyResourceExporter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyResourceExporter"
+          parent="resourceExporterModule" scope="prototype">
+        <property name="exportFilter" ref="${bean.repositoryExportFilter}"/>
+        <property name="publicFolderUri" value="#{configurationBean.publicFolderUri}"/>
+    </bean>
+
+    <bean id="multiTenancyResourceImporter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyResourceImporter"
+          parent="resourceImporterModule" scope="prototype">
+        <property name="tenantService" ref="mtTenantService"/>
+        <property name="defaultPathTransformer" ref="pathTransformer"/>
+        <property name="multiTenancyConfiguration">
+            <ref bean="multiTenancyConfiguration"/>
+        </property>
+        <property name="mtconverter">
+            <ref bean="MTConverter"/>
+        </property>
+        <property name="tenantImportMergeUtil" ref="tenantImportMergeUtil"/>
+    </bean>
+
+    <bean id="multiTenancyReportJobsImporter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyReportJobsImporter"
+          parent="reportOptionsJobsImporterModule" scope="prototype">
+        <property name="multiTenancyConfiguration">
+            <ref bean="multiTenancyConfiguration"/>
+        </property>
+        <property name="mtconverter">
+            <ref bean="MTConverter"/>
+        </property>
+        <property name="tenantImportMergeUtil" ref="tenantImportMergeUtil"/>
+    </bean>
+
+    <bean id="multiTenancyAuthorityModuleConfiguration"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyAuthorityModuleConfiguration"
+          parent="authorityModuleConfiguration" scope="prototype">
+        <property name="multiTenancyConfiguration"><ref bean="multiTenancyConfiguration"/></property>
+        <property name="tenantIdAttributeName"><value>tenant</value></property>
+    </bean>
+
+    <bean name="multiTenancyExportConfiguration"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.Configuration"
+          parent="tenantModuleConfiguration">
+        <property name="multiTenancyConfiguration">
+            <ref bean="multiTenancyConfiguration" />
+        </property>
+    </bean>
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanReferenceOverrider"
+          lazy-init="false" scope="prototype">
+        <property name="originalBeanName" value="tenantModuleConfiguration"/>
+        <property name="overridingBeanName" value="multiTenancyExportConfiguration"/>
+    </bean>
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanReferenceOverrider"
+          lazy-init="false" scope="prototype">
+        <property name="originalBeanName" value="authorityImporter"/>
+        <property name="overridingBeanName" value="multiTenancyAuthorityImporter"/>
+    </bean>
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanReferenceOverrider">
+        <property name="originalBeanName" value="standardUserPersistenceHandler"/>
+        <property name="overridingBeanName" value="multiTenancyUserPersistenceHandler"/>
+    </bean>
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanReferenceOverrider"
+          lazy-init="false">
+        <property name="originalBeanName" value="accessEventsImportHandler"/>
+        <property name="overridingBeanName" value="mtAccessEventsImportHandler"/>
+    </bean>
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanReferenceOverrider"
+          lazy-init="false">
+        <property name="originalBeanName" value="tenantModuleConfiguration"/>
+        <property name="overridingBeanName" value="multiTenancyExportConfiguration"/>
+    </bean>
+
+    <bean id="mtAccessEventsImportHandler" parent="accessEventsImportHandler"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MTAccessEventsImportHandler"/>
+
+    <!-- resource importer pro -->
+
+    <bean id="resourceImporterWithAdhocUpgrade"
+          class="com.jaspersoft.ji.adhoc.export.AuthorityKeeperResourceImporter"
+          parent="multiTenancyResourceImporter">
+        <property name="adhocUpgradeExecutor" ref="adhocUpgradeExecutor"/>
+        <property name="doUpgrade" value="${property.doAdhocUpgrade}"/>
+        <property name="allowedRoles" ref="${bean.importExportPrivilegeRoles}"/>
+    </bean>
+
+    <!-- audit events exporter -->
+
+    <bean id="auditEventsExporterModule" class="com.jaspersoft.ji.logging.audit.export.AuditEventsExporter"
+          parent="baseExporterModule" scope="prototype">
+        <property name="id" value="audit"/>
+        <property name="auditModuleConfiguration" ref="auditModuleConfiguration"/>
+        <property name="maxAuditEventsPerIteration" value="50"/>
+        <property name="includeAuditEvents" value="include-audit-events"/>
+    </bean>
+
+    <bean id="auditEventsImporterModule" class="com.jaspersoft.ji.logging.audit.export.AuditEventsImporter"
+          scope="prototype">
+        <property name="id" value="audit"/>
+        <property name="auditModuleConfiguration" ref="auditModuleConfiguration"/>
+        <property name="maxAuditEventsPerIteration" value="50"/>
+        <property name="includeAuditEvents" value="include-audit-events"/>
+    </bean>
+
+    <bean id="auditModuleConfiguration" class="com.jaspersoft.ji.logging.audit.export.AuditModuleConfiguration">
+        <property name="auditService" ref="auditService"/>
+        <property name="auditDirectory" value="audit"/>
+        <property name="auditEventsDirectory" value="auditEvents"/>
+        <property name="auditEventIndex" value="auditEventsCount"/>
+        <property name="auditEventsArchiveDirectory" value="auditEventsArchive"/>
+        <property name="auditEventArchiveIndex" value="auditEventsArchiveCount"/>
+        <property name="monitoringDirectory" value="monitoring"/>
+        <property name="reportMonitoringFactsDirectory" value="reportMonitoringFacts"/>
+        <property name="reportMonitoringFactIndex" value="reportMonitoringFactsCount"/>
+        <property name="clientClassFactory" ref="mappingResourceFactory"/>
+        <property name="serializer">
+            <bean class="com.jaspersoft.jasperserver.export.io.CastorSerializer">
+                <property name="castorMappings">
+                    <list>
+                        <value>classpath:com/jaspersoft/ji/logging/audit/export/AuditEvent.xml</value>
+                        <value>classpath:com/jaspersoft/ji/logging/audit/export/AuditEventProperty.xml</value>
+                        <value>classpath:com/jaspersoft/ji/logging/audit/export/ReportMonitoringFact.xml</value>
+                    </list>
+                </property>
+            </bean>
+        </property>
+    </bean>
+    <!--monitoring events-->
+
+    <bean id="reportMonitoringFactsExporter" class="com.jaspersoft.ji.logging.audit.export.ReportMonitoringFactsExporter" parent="baseExporterModule" scope="prototype">
+        <property name="id" value="reportMonitoring"/>
+        <property name="auditModuleConfiguration" ref="auditModuleConfiguration"/>
+        <property name="maxReportMonitoringFactsPerIteration" value="50"/>
+        <property name="includeMonitoringEvents" value="include-monitoring-events"/>
+    </bean>
+
+    <bean id="reportMonitoringFactsImporter" class="com.jaspersoft.ji.logging.audit.export.ReportMonitoringFactsImporter" scope="prototype">
+        <property name="id" value="reportMonitoring"/>
+        <property name="auditModuleConfiguration" ref="auditModuleConfiguration"/>
+        <property name="maxReportMonitoringFactsPerIteration" value="50"/>
+        <property name="includeMonitoringEvents" value="include-monitoring-events"/>
+    </bean>
+
+    <!-- pro resources -->
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanPropertyListAppender" lazy-init="false">
+        <property name="order" value="10"/>
+        <property name="beanName" value="repositorySerializer"/>
+        <property name="propertyName" value="castorMappings"/>
+        <property name="appended">
+            <list>
+                <value>classpath:com/jaspersoft/ji/adhoc/export/AdhocReportUnit.xml</value>
+                <value>classpath:com/jaspersoft/ji/ja/export/SecureMondrianConnection.xml</value>
+                <value>classpath:com/jaspersoft/commons/semantic/datasource/export/SemanticLayerDatasource.xml</value>
+                <value>classpath:com/jaspersoft/commons/semantic/export/DataDefinerUnit.xml</value>
+                <value>classpath:com/jaspersoft/ji/adhoc/export/DashboardResource.xml</value>
+                <value>classpath:com/jaspersoft/ji/adhoc/export/DashboardState.xml</value>
+                <value>classpath:com/jaspersoft/ji/adhoc/export/Property.xml</value>
+                <value>classpath:com/jaspersoft/ji/dashboard/export/DashboardModelResource.xml</value>
+                <value>classpath:com/jaspersoft/ji/dashboard/export/DashboardModelFoundation.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanPropertyMapAppender" lazy-init="false">
+        <property name="order" value="9"/>
+        <property name="beanName" value="resourceBeanMappings"/>
+        <property name="propertyName" value="implementationClassMappings"/>
+        <property name="appended">
+            <map>
+                <entry key="com.jaspersoft.ji.adhoc.AdhocReportUnit"
+                       value="com.jaspersoft.ji.adhoc.export.AdhocReportUnitBean"/>
+                <entry key="com.jaspersoft.ji.adhoc.AdhocDataView"
+                       value="com.jaspersoft.ji.adhoc.export.AdhocDataViewBean"/>
+                <entry key="com.jaspersoft.ji.ja.security.domain.SecureMondrianConnection"
+                       value="com.jaspersoft.ji.ja.export.SecureMondrianConnectionBean"/>
+                <!--  commented out: bugfix #14575
+                      <entry key="com.jaspersoft.jasperserver.api.metadata.olap.domain.MondrianConnection"
+                                     value="com.jaspersoft.ji.ja.export.SecureMondrianConnectionBean"/>
+                -->
+                <entry key="com.jaspersoft.commons.semantic.datasource.SemanticLayerDataSource"
+                       value="com.jaspersoft.commons.semantic.datasource.export.SemanticLayerDatasourceBean"/>
+                <entry key="com.jaspersoft.commons.semantic.DataDefinerUnit"
+                       value="com.jaspersoft.commons.semantic.export.DataDefinerUnitBean"/>
+                <entry key="com.jaspersoft.ji.adhoc.DashboardResource"
+                       value="com.jaspersoft.ji.adhoc.export.DashboardResourceBean"/>
+                <entry key="com.jaspersoft.ji.dashboard.DashboardModelResource"
+                       value="com.jaspersoft.ji.dashboard.export.DashboardModelResourceBean"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="repositoryExportFilterPro" class="com.jaspersoft.jasperserver.multipleTenancy.export.MultiTenancyRepositoryExportFilter"
+          parent="repositoryExportFilterCe" scope="prototype">
+        <property name="defaultThemePattern"><value><![CDATA[^(?:/organizations/([^/]+))*(?:/themes/default)]]></value></property>
+        <property name="orgTemplatePattern"><value><![CDATA[^(/organizations/[^/]+)*/organizations/org_template(/.*)?]]></value></property>
+        <property name="organizationsFolderUri" value="#{configurationBean.organizationsFolderUri}"/>
+        <property name="excludeContentsFolderPatterns">
+            <list>
+                <value><![CDATA[(/organizations/[^/]+)*/temp]]></value>
+            </list>
+        </property>
+    </bean>
+
+    <!-- report options -->
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanPropertyListAppender" lazy-init="false">
+        <property name="order" value="10"/>
+        <property name="beanName" value="repositorySerializer"/>
+        <property name="propertyName" value="castorMappings"/>
+        <property name="appended">
+            <list>
+                <value>classpath:com/jaspersoft/ji/report/options/export/ReportOptions.xml</value>
+                <value>classpath:com/jaspersoft/jasperserver/export/mapping/common/ReportParameterValue.xml</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanPropertyMapAppender" lazy-init="false">
+        <property name="order" value="9"/>
+        <property name="beanName" value="resourceBeanMappings"/>
+        <property name="propertyName" value="implementationClassMappings"/>
+        <property name="appended">
+            <map>
+                <entry key="com.jaspersoft.ji.report.options.metadata.ReportOptions"
+                       value="com.jaspersoft.ji.report.options.export.ReportOptionsBean"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="reportOptionsJobsConfiguration"
+          class="com.jaspersoft.jasperserver.export.modules.scheduling.SchedulingModuleConfiguration"
+          parent="reportJobsConfiguration">
+        <property name="reportScheduler" ref="reportOptionsSchedulingService"/>
+        <property name="internalReportScheduler" ref="reportOptionsSchedulingService"/>
+        <property name="reportParametersTranslator" ref="reportOptionsParametersTranslator"/>
+    </bean>
+
+    <bean id="reportOptionsParametersTranslator" class="com.jaspersoft.ji.report.options.export.ReportOptionsParametersTranslator"
+          parent="defaultReportParametersTranslator">
+    </bean>
+
+    <bean id="reportOptionsJobsExporterModule" class="com.jaspersoft.jasperserver.multipleTenancy.export.ReportOptionsJobsExporter"
+          scope="prototype"
+          parent="reportJobsExporterModule">
+        <property name="configuration" ref="reportOptionsJobsConfiguration"/>
+    </bean>
+
+    <bean id="reportOptionsJobsImporterModule" class="com.jaspersoft.ji.report.options.export.ReportOptionsJobsImporter"
+          scope="prototype"
+          parent="reportJobsImporterModule">
+        <property name="configuration" ref="reportOptionsJobsConfiguration"/>
+        <property name="reportOptionsService" ref="reportOptionsService"/>
+    </bean>
+
+    <!-- replace reportJobsImporter references by reportOptionsJobsImporter -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanReferenceOverrider" lazy-init="false">
+        <property name="order" value="10"/>
+        <property name="originalBeanName" value="reportJobsImporter"/>
+        <property name="overridingBeanName" value="reportOptionsJobsImporter"/>
+    </bean>
+
+
+    <!-- misc -->
+
+    <alias name="multiTenancyFacade" alias="multiTenancyService"/>
+
+    <bean id="MTConverter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.MTConverter">
+        <property name="mtAuthorityService" ref="internalUserAuthorityService"/>
+        <property name="multiTenancyService" ref="multiTenancyService"/>
+        <property name="configuration" ref="resourceModuleConfiguration"/>
+        <property name="messageSource" ref="messageSource"/>
+        <property name="tenantService" ref="${bean.hibernateTenantService}"/>
+        <property name="MT_MY_ORG_DIR" value="organization_1"/>
+        <property name="ORG_ARG" value="org-id"/>
+        <property name="ORG_LABEL_ARG" value="org-label"/>
+        <property name="skipFolders">
+            <set>
+                <value>/adhoc/temp</value>
+                <value>/properties</value>
+            </set>
+        </property>
+        <property name="rootRoles">
+            <set>
+                <value>ROLE_ADMINISTRATOR</value>
+                <value>ROLE_ANONYMOUS</value>
+                <value>ROLE_DEMO</value>
+                <value>ROLE_ETL_ADMIN</value>
+                <value>ROLE_PORTLET</value>
+                <value>ROLE_SUPERMART_MANAGER</value>
+                <value>ROLE_USER</value>
+            </set>
+        </property>
+    </bean>
+
+    <bean id="exportSecurityContextProvider"
+          class="com.jaspersoft.jasperserver.multipleTenancy.export.ExportSecurityContextProvider">
+        <property name="userAuthorityService"><ref bean="${bean.userAuthorityService}"/></property>
+        <property name="systemUsername"><value>systemadmin</value></property>
+    </bean>
+
+     <!--Service-->
+    <bean id="auditAwareImportExportService" parent="importExportService" class="com.jaspersoft.ji.logging.audit.export.service.AuditCapableImportExportServiceImpl">
+        <property name="loggingContextProvider" ref="${bean.loggingContextProvider}"/>
+        <property name="auditContext" ref="auditContext" />
+    </bean>
+
+    <bean id="exporterPrototypePro" class="com.jaspersoft.jasperserver.multipleTenancy.export.ExporterImplPro" parent="exporterPrototype">
+        <property name="tenantService" ref="tenantService"/>
+        <property name="tenantServiceSecure" ref="${bean.tenantService}"/>
+    </bean>
+
+</beans>

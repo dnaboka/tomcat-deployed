@@ -1,0 +1,152 @@
+{
+    "title": "Report Properties",
+    "type": "object",
+    "description": "A JSON Schema describing a Report Properties",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "properties": {
+        "server": {
+            "type": "string",
+            "description": "URL of JRS instance."
+        },
+        "resource": {
+            "type": "string",
+            "description": "Report resource URI."
+        },
+        "container": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "additionalProperties" : true,
+                    "description": "DOM element to render report to"
+                },
+                {
+                      "type": "string",
+                      "description": "CSS selector for container to render report to."
+                }
+            ]
+        },
+        "params": {
+            "type": "object",
+            "description": "Report's parameters values",
+            "additionalProperties": {
+                "type": "array"
+            }
+        },
+        "pages": {
+            "type": ["string", "integer", "object"],
+            "description": "Range of report's pages or single report page",
+            "pattern": "^[1-9]\\d*(\\-\\d+)?$",
+            "properties": {
+                "pages": {
+                    "type": ["string", "integer"],
+                    "description": "Range of report's pages or single report page",
+                    "pattern": "^[1-9]\\d*(\\-\\d+)?$",
+                    "minimum": 1
+                },
+                "anchor": {
+                    "type": ["string"],
+                    "description": "Report anchor"
+                }
+            },
+            "default": 1,
+            "minimum": 1
+        },
+        "scale" : {
+            "default": "container",
+            "oneOf" : [
+                {
+                    "type": "number",
+                    "minimum" : 0,
+                    "exclusiveMinimum": true,
+                    "description" : "Scale factor"
+                },
+                {
+                    "enum": ["container", "width", "height"],
+                    "default": "container",
+                    "description" : "Scale strategy"
+                }
+            ]
+        },
+        "defaultJiveUi": {
+            "type": "object",
+            "description": "Default JIVE UI options.",
+            "properties": {
+                "enabled": {
+                    "type": "boolean",
+                    "description": "Enable default JIVE UI.",
+                    "default": "true"
+                },
+                "floatingTableHeadersEnabled": {
+                    "type": "boolean",
+                    "description": "Enable table floating headers.",
+                    "default": "false"
+                },
+                "floatingCrosstabHeadersEnabled": {
+                    "type": "boolean",
+                    "description": "Enable crosstab floating header.",
+                    "default": "false"
+                }
+            }
+        },
+        "isolateDom": {
+            "type": "boolean",
+            "description": "Isolate report in iframe.",
+            "default": "false"
+        },
+        "linkOptions": {
+            "type": "object",
+            "description": "Report's parameters values",
+            "properties": {
+                "beforeRender": {
+                    "type": "function",
+                    "description": "A function to process link - link element pairs."
+                },
+                "events": {
+                    "type": "object",
+                    "description": "Backbone-like events object to be applied to JR links",
+                    "additionalProperties" : true
+                }
+            }
+        },
+        "ignorePagination": {
+            "type": "boolean",
+            "description": "Control if report will be split into separate pages"
+        },
+        "autoresize": {
+            "type": "boolean",
+            "description": "Automatically resize report on browser window resize",
+            "default": true
+        },
+        "chart": {
+            "type": "object",
+            "additionalProperties": false,
+            "description": "Properties of charts inside report",
+            "properties": {
+                "animation": {
+                    "type": "boolean",
+                    "description": "Enable/disable animation when report is rendered or resized. Disabling animation may increase performance in some cases. For now works only for Highcharts-based charts."
+                },
+                "zoom": {
+                    "enum": [false, "x", "y", "xy"],
+                    "description": "Control zoom feature of chart reports. For now works only for Highcharts-based charts."
+                }
+            }
+        },
+        "loadingOverlay": {
+            "type": "boolean",
+            "description": "Enable/disable report loading overlay",
+            "default": true
+        },
+        "scrollToTop": {
+            "type": "boolean",
+            "description": "Enable/disable scrolling to top after report rendering",
+            "default": true
+        },
+        "showAdhocChartTitle": {
+            "type": "boolean",
+            "description": "Enable/disable showing Ad Hoc chart reports title",
+            "default": true
+        }
+    },
+    "required": ["server", "resource"]
+}

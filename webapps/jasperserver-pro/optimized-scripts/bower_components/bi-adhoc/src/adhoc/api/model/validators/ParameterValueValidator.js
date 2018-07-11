@@ -1,0 +1,1 @@
+define(["require","underscore"],function(e){var r=e("underscore");return{validate:function(e,a,s){if(a.params)for(var t=e.dataSet.query.parameters,n=r.keys(a.params),u=0;u<n.length;u++)if(t._singular[n[u]]&&!a.params[n[u]].length)return{message:"The parameter "+n[u]+" must have value.",errorCode:"parameter.value.missing",parameters:[n[u]]}}}});

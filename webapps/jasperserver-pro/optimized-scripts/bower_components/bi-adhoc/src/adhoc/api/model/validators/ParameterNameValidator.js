@@ -1,0 +1,1 @@
+define(["require","underscore"],function(e){var r=e("underscore");return{validate:function(e,a,t){if(a.params)for(var n=e.dataSet.query.parameters,s=r.keys(a.params),u=0;u<s.length;u++)if(!Object.hasOwnProperty.call(n.attributes,s[u]))return{message:"Unknown parameter: "+s[u],errorCode:"parameter.unknown",parameters:[s[u],r.keys(n.attributes)]}}}});

@@ -1,0 +1,30 @@
+    {{ var hyperlinksClass = hyperlinks ? "jr-jHyperLink jr-jHyperLink-columnHeader" : ""}}
+
+    <thead class="jr-mDatatable-header jr">
+
+    {{_.each(data, function(row, y) { }}
+    <tr class="jr-mDatatable-row jr">
+        {{_.each(row, function(cell, x) { }}
+        {{ if (cell) { }}
+        <th class="jr-mDatatable-cell {{= cell.isSpacer ? 'jr-mDatatable-cellSpacer' : 'jr-mDatatable-cellColumnlabel'}} jr {{= cell.isTotal ? ' jr-mDatatable-cellTotal' : cell.isMeasure ? 'jr-mDatatable-cellMeasure' : 'jr-mDatatable-cellField'}} {{= cell.isSpacer ? '' : hyperlinksClass }}"
+            colspan="{{=cell.colspan}}"
+            rowspan="{{=cell.rowspan}}"
+            data-local-depth="{{=y}}"
+            data-local-index="{{=x}}"
+            title="{{- cell.label }}">
+            <div class="jr-mDatatable-cell-wrapper jr">
+                <div class="jr-mDatatable-cell-text jr">
+                    {{ if (cell.isExpanded || cell.isCollapsed ) { }}
+                    <span class="jr-mDatatable-cell-expander jr-mIcon jr {{= cell.isExpanded ? 'jr-isExpanded' : ''}} {{= cell.isCollapsed ? 'jr-isCollapsed' : ''}}"
+                          {{= cell.expId ? 'data-expansion-id="' + cell.expId + '"' : ''}}></span>
+                    {{ } }}
+                    {{- cell.label }}
+                </div>
+            </div>
+        </th>
+        {{ } }}
+        {{ }); }}
+    </tr>
+    {{ }); }}
+
+    </thead>

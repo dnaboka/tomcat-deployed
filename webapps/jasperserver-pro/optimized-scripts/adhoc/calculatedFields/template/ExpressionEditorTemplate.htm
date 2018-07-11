@@ -1,0 +1,72 @@
+<!-- Expression -->
+<div class="group">
+    <label class="control shorter textArea">
+        <span class="wrap">{{- title }}</span>
+        <textarea></textarea>
+    </label>
+</div>
+
+<!-- Available Operators -->
+<div class="group inputSet">
+    <ul class="expressionEditorOperators">
+        {{_.each(operators, function(item) { }}
+            <li class="button math" type="" value="{{- item.id }}" name=""><span class="icon icon-{{- item.id }}"></span></li>
+        {{ }); }}
+    </ul>
+</div>
+
+
+<ul class="list inputRow">
+
+    <!-- Available Fields -->
+    <li class="node">
+        <div class="group expressionEditorFieldsList">
+            <fieldset class="control standAlone pickList">
+                <label title="{{- i18n.ADH_421_AVAILABLE_FIELDS_TIP }}" class="control standAlone availableValues">
+                    <span class="wrap">{{- i18n.ADH_421_AVAILABLE_FIELDS }}</span>
+                    <ul class="list pickList" > </ul>
+                </label>
+            </fieldset>
+        </div>
+    </li>
+
+    <!-- Available Functions -->
+    <li class="node">
+        <div class="group expressionEditorFunctionsList">
+            <fieldset class="control standAlone pickList">
+                <label title="{{- i18n.ADH_421_AVAILABLE_FUNCTIONS_TIP }}" class="control standAlone availableValues">
+                    <span class="wrap">{{- i18n.ADH_421_AVAILABLE_FUNCTIONS }}</span>
+                    <ul class="list pickList" > </ul>
+                </label>
+            </fieldset>
+        </div>
+    </li>
+
+    <!-- Function Description -->
+    <li class="node">
+        <div class="group">
+            <span class="wrap label">{{- i18n.ADH_421_FUNCTION_DESCRIPTION }}</span>
+            <div class="description">
+                <p class="title"> </p>
+                <p class="text"> </p>
+                <p class="code"> </p>
+            </div>
+        </div>
+        <div class="group">
+            <div class="control checkBox">
+                <label title="{{- i18n.ADH_421_SHOW_ARGS_TIP }}" class="wrap">{{- i18n.ADH_421_SHOW_ARGS }}</label>
+                <input type="checkbox" checked="checked">
+            </div>
+        </div>
+    </li>
+</ul>
+
+<!-- Validate button -->
+<div class="group expressionEditorValidate">
+    <button type="button" class="button action">
+        <span class="wrap">{{- i18n["button.validate"] }}
+            <span class="icon"></span>
+        </span>
+    </button>
+    <span class="message warning"></span>
+</div>

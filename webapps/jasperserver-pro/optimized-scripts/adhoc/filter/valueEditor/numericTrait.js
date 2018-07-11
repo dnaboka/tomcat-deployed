@@ -1,0 +1,1 @@
+define(["require","jquery"],function(r){"use strict";var e=r("jquery");return{valueConverter:function(r){var t=e.trim(r);return this._basicValueConverter(t)}}});

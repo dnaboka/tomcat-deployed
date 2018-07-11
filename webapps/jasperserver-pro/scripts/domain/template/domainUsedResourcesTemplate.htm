@@ -1,0 +1,16 @@
+<table class='usedResources'>
+    <thead>
+        <tr>
+            <th>{{- fieldLabel }}</th>
+            <th>{{- resourceLabel }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{ _.each(usedResources, function(usedResource, index) { }}
+        <tr>
+            <td>{{- usedResource.field }}</td>
+            <td><a target='_blank' href='{{- contextPath }}/flow.html?_flowId=adhocFlow&resource={{- encodeURIComponent(usedResource.resource) }}'>{{- usedResource.resource }}</a></td>
+        </tr>
+        {{ }); }}
+    </tbody>
+</table>

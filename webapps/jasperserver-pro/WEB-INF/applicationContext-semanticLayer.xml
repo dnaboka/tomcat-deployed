@@ -1,0 +1,2190 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:lang="http://www.springframework.org/schema/lang"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+       	http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-3.1.xsd">
+
+    <bean class="org.springframework.beans.factory.config.CustomEditorConfigurer">
+        <property name="customEditors">
+            <map>
+                <entry key="java.util.Date">
+                    <bean class="org.springframework.beans.propertyeditors.CustomDateEditor">
+                        <constructor-arg index="0">
+                            <bean class="java.text.SimpleDateFormat">
+                                <constructor-arg value="dd/MM/yyyy"/>
+                            </bean>
+                        </constructor-arg>
+                        <constructor-arg index="1" value="false"/>
+                    </bean>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="domainSchemaPersistenceFormat" class="java.lang.String">
+        <constructor-arg type="java.lang.String" value="1.0"/>
+    </bean>
+
+    <!-- define factory that does the xml conversion -->
+    <bean id="semanticLayerFactory" class="com.jaspersoft.commons.semantic.datasource.SemanticLayerFactory">
+        <!-- this method is overridden by spring which creates a schemaTemplate bean -->
+        <lookup-method name="createSchema" bean="schemaTemplate"/>
+
+        <property name="repository" ref="${bean.repositoryService}"/>
+        <property name="engineService" ref="engineService"/>
+        <property name="securityResolverFactory">
+            <bean class="com.jaspersoft.commons.semantic.datasource.impl.SemanticLayerSecurityResolverFactoryImpl">
+                <property name="scriptRunner" ref="groovyRunner"/>
+            </bean>
+        </property>
+
+        <property name="easyXML">
+            <bean class="com.jaspersoft.commons.xml.EasyXML">
+                <property name="namespace" value="http://www.jaspersoft.com/2007/SL/XMLSchema"/>
+                <property name="outputDocument" value="true"/>
+                <!-- map from element names to class names or bean template names -->
+                <property name="elementToClassMap">
+                    <map>
+                        <!-- domain schema elements -->
+                        <!-- top level element -->
+                        <entry key="schema">
+                            <bean class="com.jaspersoft.commons.xml.ClassMapping">
+                                <property name="elementName" value="schema"/>
+                                <property name="beanName" value="schemaTemplate"/>
+                                <property name="fullClassName" value="com.jaspersoft.commons.semantic.impl.SchemaImpl"/>
+                            </bean>
+                        </entry>
+
+                        <!-- presentation objects -->
+                        <entry key="itemGroup" value="com.jaspersoft.commons.semantic.impl.ItemGroupImpl"/>
+                        <entry key="item" value="com.jaspersoft.commons.semantic.impl.ItemImpl"/>
+                        <entry key="jdbcDataSource" value="com.jaspersoft.commons.semantic.impl.DataSourceElementImpl"/>
+
+                        <!-- resource (dataset) objects
+                             the actual dataset impls need to be defined in the dataSetTypes list below,
+                             so they can be available to the createDataSet() call, but they are also
+                             added to the elementToClassMap by SemanticLayerFactory.
+                             Other components are defined below.
+                          -->
+
+                        <entry key="field" value="com.jaspersoft.commons.semantic.dsimpl.SemanticLayerField"/>
+                        <entry key="fieldRef" value="com.jaspersoft.commons.semantic.dsimpl.FieldReference"/>
+                        <entry key="fieldGroup" value="com.jaspersoft.commons.formula.FieldGroupImpl"/>
+                        <entry key="group" value="com.jaspersoft.commons.dataset.GroupDefinition"/>
+                        <entry key="sortColumn" value="com.jaspersoft.commons.dataset.SortColumn"/>
+
+                        <entry key="joinOptions">
+                            <bean class="com.jaspersoft.commons.xml.ClassMapping">
+                                <property name="fullClassName" value="com.jaspersoft.commons.datarator.JoinOptions"/>
+                                <property name="propertyMappings">
+                                    <map>
+                                        <entry key="suppressCircularJoins" value="Attribute"/>
+                                        <entry key="includeAllDataIslandJoins" value="Attribute"/>
+                                    </map>
+                                </property>
+                                <property name="propertyDefaults">
+                                    <map>
+                                        <entry key="suppressCircularJoins" value="false"/>
+                                        <entry key="includeAllDataIslandJoins" value="false"/>
+                                    </map>
+                                </property>
+                            </bean>
+                        </entry>
+                        <!-- joinInfo has its mapping defined instead of by the EasyXMLMapping interface,
+                           so it can be in the standalone EL package and not have this dependency.
+                        -->
+                        <entry key="joinInfo">
+                            <bean class="com.jaspersoft.commons.xml.ClassMapping">
+                                <property name="fullClassName" value="com.jaspersoft.commons.dataset.expr.JoinInfo"/>
+                                <property name="propertyMappings">
+                                    <map>
+                                        <entry key="joinString" value="Element"/>
+                                        <entry key="joinExpressionString" value="Element"/>
+                                        <entry key="alias" value="Attribute"/>
+                                        <entry key="referenceId" value="Attribute"/>
+                                        <entry key="fromField" value="Attribute"/>
+                                        <entry key="toField" value="Attribute"/>
+                                        <entry key="joinType" value="Attribute"/>
+                                    </map>
+                                </property>
+                                <property name="propertyDefaults">
+                                    <map>
+                                        <entry key="joinType" value="inner"/>
+                                    </map>
+                                </property>
+                            </bean>
+                        </entry>
+
+
+                        <!-- new for 5.7 join and tableRef elements -->
+                        <entry key="join"
+                               value="com.jaspersoft.commons.datarator.Join"/>
+                        <entry key="tableRef"
+                               value="com.jaspersoft.commons.datarator.TableRef"/>
+
+                        <!-- securityDefinition objects -->
+                        <entry key="securityDefinition"
+                               value="com.jaspersoft.commons.semantic.impl.SecurityDefinitionImpl"/>
+                        <entry key="resourceAccessGrantList"
+                               value="com.jaspersoft.commons.semantic.impl.ResourceAccessGrantListImpl"/>
+                        <entry key="itemGroupAccessGrantList"
+                               value="com.jaspersoft.commons.semantic.impl.ItemGroupAccessGrantListImpl"/>
+                        <entry key="itemAccessGrantList"
+                               value="com.jaspersoft.commons.semantic.impl.ItemAccessGrantListImpl"/>
+                        <entry key="resourceAccessGrant"
+                               value="com.jaspersoft.commons.semantic.impl.ResourceAccessGrantImpl"/>
+                        <entry key="itemGroupAccessGrant"
+                               value="com.jaspersoft.commons.semantic.impl.ItemGroupAccessGrantImpl"/>
+                        <entry key="itemAccessGrant" value="com.jaspersoft.commons.semantic.impl.ItemAccessGrantImpl"/>
+
+                        <!-- domain query objects -->
+                        <entry key="query" value="com.jaspersoft.commons.semantic.impl.QueryImpl"/>
+                        <entry key="queryField" value="com.jaspersoft.commons.semantic.impl.QueryFieldImpl"/>
+                        <!-- staging -->
+                        <entry key="dataStrategyControl" value="com.jaspersoft.commons.semantic.staging.DataStrategyControlImpl"/>
+
+                    </map>
+                </property>
+            </bean>
+        </property>
+        <!--
+            Each type of dataset has the following configuration:
+            - name representing it in the schema XML (it can show up both as an element name
+              and the value of the "dataSetType" attribute in a <dataSetRef>)
+            - implementing class
+            - template Spring bean, which lets you override a bunch of other stuff
+            DataSetType is just a simple bean to pull all these configs together in one place,
+            by telling the SLFactory how to create these guys.
+        -->
+        <property name="dataSetTypes">
+            <list>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="jdbcTable"/>
+                    <property name="templateBeanName" value="jdbcTableTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.JdbcTableDataSet"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="jdbcQuery"/>
+                    <property name="templateBeanName" value="jdbcQueryTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.JdbcQueryDataSet"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="jrQueryDataSet"/>
+                    <property name="templateBeanName" value="jrQueryTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.JRQueryDataSet"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="memory"/>
+                    <property name="templateBeanName" value="memoryDataSetTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.memory.MemoryDataSet"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="null"/>
+                    <property name="templateBeanName" value="nullDataSetTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.memory.NullDataSet"/>
+                </bean>
+
+                <!-- to be continued :-) -->
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="hibernateEntity"/>
+                    <property name="templateBeanName" value="hibernateEntityTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.HibernateEntityDataSet"/>
+                </bean>
+                <!-- a way to save a query on another domain in a dataset 
+                	(will eventually replace the nasty JRXML produced by data chooser and used by Ad Hoc) -->
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="domainQuery"/>
+                    <property name="templateBeanName" value="domainQueryTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.DomainQueryDataSet"/>
+                </bean>
+
+                <!-- 
+                  the following two are only refs but they still need to
+                  have access to the expression evaluator
+                -->
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="dataSetRef"/>
+                    <property name="templateBeanName" value="dataSetRefTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.DataSetReference"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DataSetType">
+                    <property name="typeName" value="joinedDataSetRef"/>
+                    <property name="templateBeanName" value="joinedDataSetRefTemplate"/>
+                    <property name="className" value="com.jaspersoft.commons.semantic.dsimpl.JoinedDataSetReference"/>
+                </bean>
+            </list>
+        </property>
+        <property name="config" ref="slConfig"/>
+    </bean>
+
+    <!-- 
+      factory used to run stuff in groovy
+      centralize configuration here for use in domain security principalExpression evaluation and sql generation
+      -->
+    <bean id="groovyRunner" class="com.jaspersoft.commons.groovy.GroovyRunnerFactory">
+        <property name="binderList">
+            <list>
+                <bean class="com.jaspersoft.commons.semantic.impl.AuthenticationBinder">
+                    <property name="name" value="authentication"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.impl.TenantBinder">
+                    <property name="name" value="tenant"/>
+                    <property name="tenantService" ref="tenantService"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.impl.NowBinder">
+                    <property name="name" value="now"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.impl.UserBinder">
+                    <property name="name" value="user"/>
+                </bean>
+            </list>
+        </property>
+        <property name="defaultBindings">
+            <map>
+                <entry key="now">
+                    <bean class="java.util.Date"/>
+                </entry>
+                <entry key="cache">
+                    <bean class="com.jaspersoft.commons.util.DayCache"/>
+                </entry>
+                <entry key="attributesService" value-ref="profileAttributeServiceWrapper"/>
+            </map>
+        </property>
+        <property name="importStars">
+            <list>
+                <value>com.jaspersoft.commons.dataset.expr</value>
+                <value>net.sf.jasperreports.types.date</value>
+                <value>com.jaspersoft.jasperserver.api.common.util.rd</value>
+                <value>com.jaspersoft.commons.util.sql</value>
+            </list>
+        </property>
+        <!-- This is a ref to a bean which can add additional customizers before the Groovy script is compiled.
+             The "groovyCustomizerFactory" is a Groovy bean (defined below) whose source is in the webapp.
+             See the bean source for more information.
+             Uncomment this property to enable.
+        <property name="groovyCustomizerFactory" ref="groovyCustomizerFactory"/>
+        -->
+        <!--
+            Provide a loader which can be used to load an alternate base script class
+         -->
+        <property name="springyLoader" ref="groovySpringyLoader" />
+        <!--
+            Alternate base script class (must extend groovy.lang.Script)
+         -->
+        <property name="baseScriptClass" value="groovy_script.BaseGroovyScript"/>
+        <!--
+             when set to 'true'
+             JRS will delete groovy class metadata 'ClassInfo's from the groovy runtime
+
+             The intent of this is to cut down on accumulating memory usage
+             by groovy classes generated by JRS.
+         -->
+         <property name="groovyRemoveUsedClassInfos" value="true"/>
+
+         <!--
+             the size of the space used to account for used ClassInfos generated for GeneratedColumns.
+             this space exists because all deletions of old groovy ClassInfos
+             are done by user threads but we force single threaded access
+             to groovy's ClassInfo code to head off possible concurrency conflicts.
+             if 2 threads each want to delete their ClassInfos, only 1 thread will
+             win and get access to its target ClassInfo.  The losing thread returns i
+             immediately and leaves without removing its ClassInfo.
+             The orphan ClassInfo will be removed when a winner thread does sweep
+             duty after the winning thread has taken care of it's ClassInfo.
+             So this property is the size of the 'buffer space' for orphan ClassInfos
+         -->
+         <property name="groovyUsedGenColumnClassInfoTotalSetSize" value="3000"/>
+
+        <!--
+            groovy scripts are created to generate SQL fragments via DOM-EL
+            when this property is true
+            scripts with the same DOM-EL expression are pooled and reused
+        -->
+        <property name="groovyReuseGeneratedShellScripts" value="true"/>
+
+        <!--
+            When compiled groovy Shell Scripts are reused,
+            This is the number of unique Scripts (their source code) that will be cached.
+            When the property 'groovyRemoveUsedClassInfos' is true
+            this is also the size of the ClassInfo deletion buffer space for Shell Scripts
+        -->
+        <property name="groovyShellScriptCacheMaxNumberOfUniqueScriptKeys" value="3000"/>
+
+        <!--
+            For a given unique Shell Script text, this is the number of pooled instances
+            that are retained for simultaneous access by multiple threads
+        -->
+        <property name="groovyShellScriptCacheMaxNumberPerUniqueScriptKey" value="100"/>
+
+        <!--
+            This pair controls how often groovy usage statistics are written to the log.
+            Serial numbers assigned to individual groovy JRS Generated Column and JRS Script code
+            between the range of 1 and groovyUsedGenColumnClassInfoTotalSetSize for JRS Generated Columns
+            and between the range of 1 and groovyShellScriptCacheMaxNumberOfUniqueScriptKeys for JRS Scripts
+            A single complete run through all the serial number values is a single cycle
+            So the MaxCycles setting tells the runtime to print DEBUG statistics after having
+            completed MaxCycles number of cycles through each number range.
+
+            The statistics logging can be turned on at run time by setting the logger in the
+            Server Management Logger settings:
+
+                 com.jaspersoft.commons.groovy.GroovyRunnerFactory$ClassInfoCleanerStatus=DEBUG
+
+        -->
+        <property name="genColumnMaxCycles" value="100"/>
+        <property name="scriptMaxCycles" value="100"/>
+
+    </bean>
+    <!--
+      This is a template for the schema object that gets created on demand by the SL factory.
+      Easier to do it here rather than passing all this stuff along from the SL factory.
+    -->
+    <bean id="schemaTemplate" class="com.jaspersoft.commons.semantic.impl.SchemaImpl" scope="prototype">
+        <property name="dataSourceResolver">
+            <bean class="com.jaspersoft.commons.semantic.impl.DataSourceResolverImpl" scope="prototype">
+                <property name="repository" ref="${bean.repositoryService}"/>
+                <property name="engineService" ref="engineService"/>
+                <property name="semanticLayerFactory" ref="semanticLayerFactory"/>
+            </bean>
+        </property>
+        <property name="objectTypeMapper" ref="objectTypeMapper"/>
+        <property name="evaluator" ref="expressionEvaluator"/>
+        <property name="profileAttributesResolver" ref="profileAttributesResolver"/>
+        <property name="version" value="1.0"/>
+    </bean>
+
+    <!-- base template for any dataset in the domain -->
+   <bean id="baseDataSetTemplate" class="com.jaspersoft.commons.semantic.dsimpl.AbstractSemanticLayerDataSet" scope="prototype" abstract="true">
+        <property name="expressionEvaluator">
+            <bean parent="domainDataSetExpressionEvaluator"/>
+        </property>
+    </bean>
+
+
+    <!-- template for jdbc table data set -->
+    <!-- we're setting the implementation of the expressionEvaluator and a couple of the 
+         functions it knows about. 
+      -->
+    <bean id="jdbcTableTemplate" class="com.jaspersoft.commons.semantic.dsimpl.JdbcTableDataSet" parent="baseDataSetTemplate" scope="prototype">
+        <property name="sqlGeneratorFactory" ref="dbServerTypeConfigFactory"/>
+        <property name="configuration" ref="slConfig"/>
+        <property name="graphOperations" ref="graphOperations" />
+    </bean>
+
+    <!--
+        this maps from a database name to a SQLGenerator instance and other properties
+      -->
+
+    <bean id="dbServerTypeConfigFactory" class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfigFactory">
+        <property name="defaultConfig">
+            <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                <property name="productName" value="default"/>
+                <property name="sqlGenerator" ref="defaultSQLGenerator"/>
+                <property name="properties">
+                    <map>
+                        <entry key="maxMaxRows" value="50000000"/>
+                    </map>
+                </property>
+            </bean>
+        </property>
+        <property name="serverTypes">
+            <list>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="oracle"/>
+                    <property name="sqlGenerator" ref="oracleSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="postgresql"/>
+                    <property name="sqlGenerator" ref="postgreSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="Microsoft SQL Server"/>
+                    <property name="sqlGenerator" ref="sqlserverGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="microsoft azure sql database"/>
+                    <property name="sqlGenerator" ref="sqlserverGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="db2"/>
+                    <property name="sqlGenerator" ref="db2SQLGenerator"/>
+                    <!-- could be db2/linux, db2/sun64, etc -->
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="ingres"/>
+                    <property name="sqlGenerator" ref="sqlserverGenerator"/>
+                    <!-- Ingres uses the same syntaxes as Microsoft at the moment -->
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="metamatrix"/>
+                    <property name="sqlGenerator" ref="mmxSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="vertica"/>
+                    <property name="sqlGenerator" ref="verticaSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="mysql"/>
+                    <property name="sqlGenerator" ref="mysqlSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="mongodb"/>
+                    <property name="driverName" value="mongodb"/>
+                    <property name="sqlGenerator" ref="dataDirectSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="impala"/>
+                    <property name="driverName" value="impala"/>
+                    <property name="sqlGenerator" ref="dataDirectSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="Teiid Embedded"/>
+                    <property name="sqlGenerator" ref="teiidSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="apache hive"/>
+                    <property name="sqlGenerator" ref="dataDirectSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="spark sql"/>
+                    <property name="driverName" value="SparkSQL"/>
+                    <property name="sqlGenerator" ref="sparkDataDirectSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="salesforce"/>
+                    <property name="sqlGenerator" ref="dataDirectSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="cassandra"/>
+                    <property name="driverName" value="cassandra"/>
+                    <property name="sqlGenerator" ref="dataDirectSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="impala"/>
+                    <property name="driverName" value="impalajdbc"/>
+                    <property name="sqlGenerator" ref="simbaSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="cassandra"/>
+                    <property name="driverName" value="cassandrajdbc"/>
+                    <property name="sqlGenerator" ref="simbaSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="google bigquery"/>
+                    <property name="driverName" value="SimbaJDBCDriverforGoogleBigQuery"/>
+                    <property name="sqlGenerator" ref="simbaGoogleBigQuerySQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="spark"/>
+                    <property name="driverName" value="SparkJDBC"/>
+                    <property name="sqlGenerator" ref="simbaSparkSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="SQL Anywhere"/>
+                    <property name="sqlGenerator" ref="sqlAnywhereSQLGenerator"/>
+                </bean>
+                <bean class="com.jaspersoft.commons.semantic.dsimpl.DBServerConfig">
+                    <property name="productName" value="Adaptive Server Enterprise"/>
+                    <property name="sqlGenerator" ref="sqlserverGenerator"/>
+                </bean>
+            </list>
+        </property>
+        <property name="configuration" ref="slConfig"/>
+    </bean>
+
+    <bean id="defaultSQLGenerator" class="com.jaspersoft.commons.semantic.dsimpl.SQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map>
+                <entry key="percentRatio">
+                    <value>"(("+sqlArgs[0]+"/"+sqlArgs[1]+") * 100)"</value>
+                </entry>
+                <entry key="Date">
+                    <value>sqlArgs[0]</value>
+                </entry>
+                <entry key="Timestamp">
+                    <value>"timestamp(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <!-- translate no-arg count to count(*) -->
+                <entry key="CountAll">
+                    <value>sqlArgs.isEmpty() ? "count(*)" : "count(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="CountDistinct">
+                    <value>"count(DISTINCT " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="today">
+                    <value>"curdate()"</value>
+                </entry>
+                <entry key="equalsDate">
+                    <value>
+                        def javaType = Class.forName(args[0].getJavaType())
+
+                        def value = args[1] instanceof ParameterVariable ? args[1].getValue() : args[1]
+                        value = value instanceof FormattableLiteral ? value.format() : value.getValue()
+
+                        DateRange date = DateRangeFactory.getInstanceForExpression(value, javaType)
+
+                        Range range = eval.getExpressionFactory().getRange()
+                        range.setStart(eval.getDate(date == null ? null : date.getStart(), javaType))
+                        range.setEnd(eval.getDate(date == null ? null : date.getEnd(), javaType))
+
+                        return eval.getOperator(In.IN, args[0], range)
+                    </value>
+                </entry>
+                <entry key="afterDate">
+                    <value>
+                        def javaType = Class.forName(args[0].getJavaType())
+
+                        def value = args[1] instanceof ParameterVariable ? args[1].getValue() : args[1]
+                        value = value instanceof FormattableLiteral ? value.format() : value.getValue()
+
+                        DateRange date = DateRangeFactory.getInstanceForExpression(value, javaType)
+                        return eval.getOperator(ComparisonOperator.GREATER, args[0],
+                        eval.getDate(date == null ? null : date.getEnd(), javaType))
+                    </value>
+                </entry>
+                <entry key="beforeDate">
+                    <value>
+                        def javaType = Class.forName(args[0].getJavaType())
+
+                        def value = args[1] instanceof ParameterVariable ? args[1].getValue() : args[1]
+                        value = value instanceof FormattableLiteral ? value.format() : value.getValue()
+
+                        DateRange date = DateRangeFactory.getInstanceForExpression(value, javaType)
+                        return eval.getOperator(ComparisonOperator.LESS, args[0],
+                        eval.getDate(date == null ? null : date.getStart(), javaType))
+                    </value>
+                </entry>
+                <entry key="isOnOrAfterDate">
+                    <value>
+                        def javaType = Class.forName(args[0].getJavaType())
+
+                        def value = args[1] instanceof ParameterVariable ? args[1].getValue() : args[1]
+                        value = value instanceof FormattableLiteral ? value.format() : value.getValue()
+
+                        DateRange date = DateRangeFactory.getInstanceForExpression(value, javaType)
+                        return eval.getOperator(ComparisonOperator.GREATER_OR_EQUAL, args[0],
+                        eval.getDate(date == null ? null : date.getStart(), javaType))
+                    </value>
+                </entry>
+                <entry key="isOnOrBeforeDate">
+                    <value>
+                        def javaType = Class.forName(args[0].getJavaType())
+
+                        def value = args[1] instanceof ParameterVariable ? args[1].getValue() : args[1]
+                        value = value instanceof FormattableLiteral ? value.format() : value.getValue()
+
+                        DateRange date = DateRangeFactory.getInstanceForExpression(value, javaType)
+                        return eval.getOperator(ComparisonOperator.LESS_OR_EQUAL, args[0],
+                        eval.getDate(date == null ? null : date.getEnd(), javaType))
+                    </value>
+                </entry>
+                <entry key="betweenDates">
+                    <value>
+                        def javaType = Class.forName(args[0].getJavaType())
+
+                        def value1 = args[1] instanceof ParameterVariable ? args[1].getValue() : args[1]
+                        def value2 = args[2] instanceof ParameterVariable ? args[2].getValue() : args[2]
+
+                        value1 = value1 instanceof FormattableLiteral ? value1.format() : value1.getValue()
+                        value2 = value2 instanceof FormattableLiteral ? value2.format() : value2.getValue()
+
+                        DateRange date1 = DateRangeFactory.getInstanceForExpression(value1, javaType)
+                        DateRange date2 = DateRangeFactory.getInstanceForExpression(value2, javaType)
+
+                        Range range = eval.getExpressionFactory().getRange()
+                        range.setStart(eval.getDate(date1 == null ? null : date1.getStart(), javaType))
+                        range.setEnd(eval.getDate(date2 == null ? null : date2.getEnd(), javaType))
+
+                        return eval.getOperator(In.IN, args[0], range)
+                    </value>
+                </entry>
+                <entry key="StartsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like concat(" + sqlArgs[1] + ", '%')"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="EndsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like concat('%'," + sqlArgs[1] + ")"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like concat('%'," + sqlArgs[1] + ", '%')"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="Concatenate">
+                    <value>"concat(" + sqlArgs.join(", ") + ")"</value>
+                </entry>
+                <!--
+                       2014-03-28  thorick
+                       used to be substr
+                       Mid is the excel name for substr, and the name that we are using v5.6 and later
+                -->
+                <entry key="Mid">
+                    <value>"substr(" + sqlArgs[0] + ", " + sqlArgs[1] + (sqlArgs.size() == 3 ? (", " + sqlArgs[2]) : "") + ")"</value>
+                    <!--
+                      <value>"substring(" + sqlArgs[0] + ", " + sqlArgs[1] + ", len(" + sqlArgs[0] + "))"</value>
+                      -->
+                </entry>
+                <entry key="groovy">
+                    <value>"'" + evaluate(args[0].value) + "'"</value>
+                </entry>
+                <entry key="testCurrentUserRoles">
+                    <value>sqlArgs[0] + " in (" + authentication.principal.roles.collect { "'" + it.roleName +
+                        "'"}.join(", ") + ")"
+                    </value>
+                </entry>
+                <entry key="Length">
+                    <value>"length(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="IsNull">
+                    <value>"(" + sqlArgs[0] + " is null)"</value>
+                </entry>
+                <entry key="str2int">
+                    <value>"cast(" + sqlArgs[0] + " as signed)"</value>
+                </entry>
+                <entry key="isAnyValue">
+                    <value>"1 = 1"</value>
+                </entry>
+                <entry key="IF">
+                    <value>
+                        "case when (" + sqlArgs[0] + ") then (" + sqlArgs[1] + ") else (" + sqlArgs[2] + ") end"
+                    </value>
+                </entry>
+                <!--  There are really two types of case in SQL:
+ 					  case when cond1 then ret1 when cond2 then ret2 ...[ else defaultRet]
+                      case field when val1 then ret1 when val2 then ret2 ...[ else defaultRet]
+                      
+                      This is too confusing to keep straight so we are calling the first "CaseWhen" and the second "Case"
+                      (there was an existing "case" in the SQLGenerator already).
+                      CaseWhen has a condition as a first argument which will be boolean
+                      Case can have a first argument of any type
+                      After the beginning, the syntax is the same
+                -->
+                <entry key="Case">
+                    <value>
+                   		// for value case, put test expression right after "case"
+                    	def expr = "case (" + sqlArgs.remove(0) + ")"
+                    	// alternate when/then
+                        while (sqlArgs.size() >= 2) {
+	                        expr += (" when (" + sqlArgs.remove(0) + ") then (" + sqlArgs.remove(0) + ")")
+	                    }
+	                    // add else if something left over
+                        if (sqlArgs.size()) {
+    	                    expr += (" else (" + sqlArgs.remove(0) + ")")
+    	                }
+                        expr += " end"
+                    </value>
+                </entry>
+                <entry key="CaseWhen">
+                    <value>
+                    	def expr = "case "
+                    	// alternate when/then
+                        while (sqlArgs.size() >= 2) {
+	                        expr += (" when (" + sqlArgs.remove(0) + ") then (" + sqlArgs.remove(0) + ")")
+	                    }
+	                    // add else if something left over
+                        if (sqlArgs.size()) {
+    	                    expr += (" else (" + sqlArgs.remove(0) + ")")
+    	                }
+                        expr += " end"
+                    </value>
+                </entry>
+                <entry key="CaseRange">
+                    <value>
+                   		// this one uses the "case when" syntax, but uses the values as bounds in the range
+                   		// it produces something like this:
+                   		// case when arg1 &lt;= arg2 then arg3 when arg1 &lt;= arg4 then arg5...
+                    	def expr = "case "
+                    	def testValue = sqlArgs.remove(0)
+                    	// alternate when/then
+                        while (sqlArgs.size() >= 2) {
+                        	def compareVal = sqlArgs.remove(0)
+                        	def condition = (compareVal == 'null') ? "$testValue is null" : "$testValue &lt;= $compareVal"
+	                        expr += (" when ($condition) then (" + sqlArgs.remove(0) + ")")
+	                    }
+	                    // add else if something left over
+                        if (sqlArgs.size()) {
+    	                    expr += (" else (" + sqlArgs.remove(0) + ")")
+    	                }
+                        expr += " end"
+                    </value>
+                </entry>
+                <entry key="wrapBooleanExpression">
+                    <value>return sqlArgs[0]
+                    </value>
+                </entry>
+                <entry key="testProfileAttribute">
+                    <value>
+                        def testAttrName = args[1].value
+                        def testField = sqlArgs[0]
+                        def category = (args.size() > 2) ? args[2].value : null;
+                        def attrVal = attributesService.getAttribute(testAttrName, category, false)?.attrValue
+                        if (attrVal != null) {
+                            return testField + " in (" + attrVal.split(",").collect{"'" + it.trim() + "'"}.join(",") + ")"
+                        } else {
+                            return "1 = 1"
+                        }
+                    </value>
+                </entry>
+                <entry key="Attribute">
+                    <value>
+                        def testAttrName = args[0].value
+                        def category = (args.size() > 1) ? args[1].value : null;
+                        attrVal = attributesService.getAttribute(testAttrName, category, true)?.attrValue
+                        return eval.getLiteral(attrVal)
+                    </value>
+                </entry>
+                <entry key="Integer">
+                    <value>
+                        return GroovyUtils.getInstance(this.binding).cast("bigint");
+                    </value>
+                </entry>
+                <entry key="Decimal">
+                    <value>
+                        return GroovyUtils.getInstance(this.binding).cast("numeric", 20, 10);
+                    </value>
+                </entry>
+                <entry key="Boolean">
+                    <value>
+                        Boolean.valueOf(args[0].value) ? "1" : "0"
+                    </value>
+                </entry>
+                <entry key="testLocale">
+                    <value>
+                        def testField = sqlArgs[0]
+                        def locale = org.springframework.context.i18n.LocaleContextHolder.getLocale().toString()
+                        testField + " = '" + locale + "'"
+                    </value>
+                </entry>
+                <entry key="addNULLPlaceHolder">
+                    <value>"NULL"</value>
+                </entry>
+                <entry key="Year">
+                    <value>"DATE_PART('year', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"DATE_PART('month', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"DATE_PART('day', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"DATE_PART('hour', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"DATE_PART('minute', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"DATE_PART('second', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="floor">
+                    <value>"floor(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="filter">
+                    <value>
+                        args[2]
+                    </value>
+                </entry>
+                <entry key="aggregationFunction">
+                    <value>
+                        args[1]
+                    </value>
+                </entry>
+            </map>
+        </property>
+
+        <!-- script runner for evaluating groovy -->
+        <property name="groovyRunner" ref="groovyRunner"/>
+        <!-- preprocessor which can run various transformations before generating SQL -->
+        <property name="preprocessor" ref="defaultPreprocessor" />
+
+
+        <!-- Some db have identifiers limit in characters - "true", some in bytes - "false" -->
+        <property name="dbIdentifiersLimitInChars" value="true"/>
+    </bean>
+
+    <bean id="oracleSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="Date">
+                    <value>"to_date(" + sqlArgs[0] + ", 'YYYY-MM-DD')"</value>
+                </entry>
+                <entry key="Timestamp">
+                    <value>"to_timestamp(" + sqlArgs[0] + ", 'YYYY-MM-DD HH24:MI:SS.FF')"</value>
+                </entry>
+                <entry key="StartsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like " + sqlArgs[1] + " || '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="EndsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' || " + sqlArgs[1]
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return " regexp_like(" + sqlArgs[0] + "," + "'" + sqlArgs[1] + "', 'i')"
+                        if (! (search instanceof String)) { search = search.value }
+                        return " regexp_like(" + sqlArgs[0] + "," + "'" + search.replace("'","''") + "', 'i')"
+                    </value>
+                </entry>
+                <entry key="Concatenate">
+                    <value>sqlArgs.join(" || ")</value>
+                </entry>
+                <entry key="Time">
+                    <value>"to_timestamp(" + sqlArgs[0] + ", 'HH24:MI:SS.FF')"</value>
+                </entry>
+
+                <!--   Mid / substr   uses default DB generator -->
+
+                <entry key="str2int">
+                    <value>"cast(" + sqlArgs[0] + " as number(10,0))"</value>
+                </entry>
+                <entry key="date">
+                    <value>"trunc(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="time">
+                    <value>"to_date((" + sqlArgs[0] + " - trunc(" + sqlArgs[0] + ")) * 86400, 'SSSSS')"</value>
+                </entry>
+                <entry key="Year">
+                    <value>"EXTRACT(YEAR FROM " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"EXTRACT(MONTH FROM " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"EXTRACT(DAY FROM " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"EXTRACT(HOUR FROM " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"EXTRACT(MINUTE FROM " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"EXTRACT(SECOND FROM " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="wrapBooleanExpression">
+                    <value>"case when (" + sqlArgs[0] + ") then (" + '1' + ") else (" + '0' + ") end"
+                    </value>
+                </entry>
+                <!-- bug 35026: Oracle doesn't like passing comparison op to count() -->
+                <entry key="CountAll">
+                    <value>def invalidArg = (sqlArgs.isEmpty() || args[0].expressionType == com.jaspersoft.commons.dataset.expr.Expression.ExpressionType.COMPARISON)
+                        invalidArg ? "count(*)" : "count(" + sqlArgs[0] + ")"
+                    </value>
+                </entry>
+                <entry key="Integer">
+                    <value>
+                        return GroovyUtils.getInstance(this.binding).cast("number", 20, 0);
+                    </value>
+                </entry>
+                <entry key="Decimal">
+                    <value>
+                        return GroovyUtils.getInstance(this.binding).cast("number", 20, 10);
+                    </value>
+                </entry>
+            </map>
+        </property>
+
+        <!-- Some db have identifiers limit in characters - "true", some in bytes - "false" -->
+        <property name="dbIdentifiersLimitInChars" value="false"/>
+
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_BEGINNING" value="select * from ("/>
+                <entry key="AT_END" value=") where ROWNUM &lt;= _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+    <!--
+
+             <property name="limitSQLMap">
+                <map>
+                    <entry key="AT_BEGINNING" value="select * from ("/>
+                    <entry key="AT_END" value=") where ROWNUM &lt;= _row_limit_"/>
+                   </map>
+            </property>
+        </bean>
+
+                   <property name="limitSQLMap">
+                <map>
+                    <entry key="BEFORE_FIELD_LIST" value="top _row_limit_"/>
+                   </map>
+            </property>
+                   <property name="limitSQLMap">
+                <map>
+                    <entry key="AT_END" value="limit _row_limit_"/>
+                   </map>
+            </property>
+     -->
+    <bean id="postgreSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="Timestamp">
+                    <value>
+                        sqlArgs[0]
+                    </value>
+                </entry>
+                <entry key="Boolean">
+                    <value>
+                        Boolean.valueOf(args[0].value).toString().toUpperCase()
+                    </value>
+                </entry>
+                <entry key="StartsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like " + sqlArgs[1] + " || '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="EndsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' || " + sqlArgs[1]
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " ilike '%' || " + sqlArgs[1] + " || '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " ilike '%" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="Concatenate">
+                    <value>"(" + sqlArgs.join(" || ") + ")"</value>
+                </entry>
+                <entry key="Time">
+                    <value>'"time"(' + sqlArgs[0] + ")"</value>
+                </entry>
+
+                <!--   Mid / substr   uses default DB generator -->
+
+                <entry key="str2int">
+                    <value>"cast(" + sqlArgs[0] + " as int8)"</value>
+                </entry>
+                <entry key="date">
+                    <value>"date_trunc('day', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="time">
+                    <value>'"time"(' + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="Round">
+                    <value>
+                        if (sqlArgs.size() == 1)
+                        return "round(cast (" + sqlArgs[0] + " as numeric), 0)"
+                        else
+                        return "round(cast (" + sqlArgs[0] + " as numeric), " + sqlArgs[1] + ")"
+                    </value>
+                </entry>
+                <entry key="divide">
+                    <value>
+                        def top = sqlArgs[0]
+                        def bottom = sqlArgs[1]
+                        // PostgreSQL considers that division of two integral types is still an integral type, so cast one to numeric
+                        // it also blows up when the denominator is zero; set to null
+                        "cast ($top as numeric) / (case when (($bottom) = 0) then null else ($bottom) end)" as String
+                    </value>
+                </entry>
+                <entry key="multiply">
+                    <value><![CDATA[
+                    // The type for multiplication is determined by finding a type that will fit all args,
+                    // then taking the next biggest type (see ArithmeticOperatorDefinition)
+                    // For example, if A and B are type Integer, "A * B" is Long
+                    // PostgreSQL would like to know this, because if you don't cast one of the operands,
+                    // it's possible to get an overflow
+                    // So just check the first operand--if it has a different type than the overall expression
+                    // (in functionExpr), cast it to the equivalent PostgreSQL type
+                    def typeMap = [	"java.lang.Long": "bigint", 
+                    				"java.lang.Integer": "integer",
+                    				"java.lang.Double": "double precision"]
+                    def sqlType = typeMap[functionExpr.javaType]
+                    if ((args[0].javaType != functionExpr.javaType) && sqlType) {
+                    	sqlArgs[0] = "cast(" + sqlArgs[0] + " as " + sqlType + ")"
+                    }
+                    sqlArgs.join(" * ")
+                    ]]>
+                    </value>
+                </entry>
+
+                <!--  Bug 41136 -->
+                <entry key="Year">
+                    <value>"DATE_PART('year',  " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"DATE_PART('month', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"DATE_PART('day', " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"DATE_PART('hour', cast(" + sqlArgs[0] + " as time))"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"DATE_PART('minute', cast(" + sqlArgs[0] + " as time))"</value>
+                </entry>
+                <entry key="second">
+                    <value>"DATE_PART('second', cast(" + sqlArgs[0] + " as time))"</value>
+                </entry>
+
+            </map>
+        </property>
+
+        <!-- Some db have identifiers limit in characters - "true", some in bytes - "false" -->
+        <property name="dbIdentifiersLimitInChars" value="true"/>
+
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="limit _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="db2SQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="StartsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return "substr(" + sqlArgs[0] + ", 1, length(" + sqlArgs[1] + ")) = " + sqlArgs[1]
+                        if (! (search instanceof String)) { search = search.value }
+                        return "substr(" + sqlArgs[0] + ", 1, length('"+ search.replace("'","''") + "')) = '" +
+                        search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="EndsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return "substr(" + sqlArgs[0] + ", length(" + sqlArgs[0] + ")-length(" + sqlArgs[1] + ")+1,"+
+                        "length(" + sqlArgs[1] + ")) = " + sqlArgs[1]
+                        if (! (search instanceof String)) { search = search.value }
+                        return "substr(" + sqlArgs[0] + ", length(" + sqlArgs[0] + ")-length('" +
+                        search.replace("'","''") + "')+1, length('" + search.replace("'","''") + "')) = '" +
+                        search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return "locate(" + sqlArgs[1] + ", " + sqlArgs[0] + ") &lt;&gt; 0"
+                        if (! (search instanceof String)) { search = search.value }
+                        return "locate('" + search.replace("'","''") + "', " + sqlArgs[0] + ") &lt;&gt; 0"
+                    </value>
+                </entry>
+                <entry key="Concatenate">
+                    <value>sqlArgs.join(" || ")</value>
+                </entry>
+                <entry key="Time">
+                    <value>"TIME(" + sqlArgs[0] + ")"</value>
+                </entry>
+
+                <!--   Mid / substr   uses default DB generator -->
+
+
+                <entry key="str2int">
+                    <value>"cast(" + sqlArgs[0] + " as integer)"</value>
+                </entry>
+                <entry key="date">
+                    <value>"DATE(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="time">
+                    <value>"TIME(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="Year">
+                    <value>"year(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"month(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"day(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"hour(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"minute(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"second(" + sqlArgs[0] + ")"</value>
+                </entry>
+            </map>
+        </property>
+
+        <!-- Some db have identifiers limit in characters - "true", some in bytes - "false" -->
+        <property name="dbIdentifiersLimitInChars" value="true"/>
+
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="fetch first _row_limit_ rows only"/>
+            </map>
+        </property>
+
+    </bean>
+
+    <bean id="sqlserverGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="StartsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like " + sqlArgs[1] + " + '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="EndsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' + " + sqlArgs[1]
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' + " + sqlArgs[1] + " + '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="Date">
+                    <value>"{d " + sqlArgs[0] + "}"</value>
+                </entry>
+                <entry key="Timestamp">
+                    <value>"{ts " + sqlArgs[0] + "}"</value>
+                </entry>
+                <entry key="Concatenate">
+                    <value>sqlArgs.join(" + ")</value>
+                </entry>
+                <entry key="Length">
+                    <value>"len(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="str2int">
+                    <value>"cast(" + sqlArgs[0] + " as numeric(10,0))"</value>
+                </entry>
+                <entry key="Time">
+                    <value>"DATETIME(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="Time">
+                    <value>"dateadd(ss, datediff(ss, dateadd(dd, datediff(dd, 0, " + sqlArgs[0] + "), 0), " + sqlArgs[0] + "), 0)"</value>
+                </entry>
+                <!-- Mid is the Excel name for 'substring' -->
+                <entry key="Mid">
+                    <!--<value>"substring(" + sqlArgs[0] + ", " + sqlArgs[1] + (sqlArgs.size() == 3 ? (", " + sqlArgs[2]) : "") + ")"</value>-->
+                    <!--Bug 44398 -->
+                    <value>
+                        def newArgs = new ArrayList(sqlArgs)
+                        if (sqlArgs.size() == 2) {
+                            def expression =  "len(" + sqlArgs[0] + ") - " + sqlArgs[1];
+                            def condition =  "("+ expression + ") &lt; 0";
+                            newArgs.add("case when ("+ condition +") then (0) else ("+ expression +") end")
+                        }
+                        "substring(" + newArgs.join(", ") + ")"
+                    </value>
+                </entry>
+                <entry key="date">
+                    <value>"dateadd(dd, datediff(dd, 0, " + sqlArgs[0] + "), 0)"</value>
+                </entry>
+                <entry key="time">
+                    <value>"dateadd(ss, datediff(ss, dateadd(dd, datediff(dd, 0, " + sqlArgs[0] + "), 0), " + sqlArgs[0] + "), 0)"</value>
+                </entry>
+                <entry key="Year">
+                    <value>"DATEPART(year, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"DATEPART(month, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"DATEPART(day, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"DATEPART(hour, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"DATEPART(minute, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"DATEPART(second, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="wrapBooleanExpression">
+                    <value>"case when (" + sqlArgs[0] + ") then (" + '1' + ") else (" + '0' + ") end"
+                    </value>
+                </entry>
+                <entry key="Round">
+                    <value>
+                        if (sqlArgs.size() == 1)
+                        return "round(" + sqlArgs[0] + ", 0)"
+                        else
+                        return "round(" + sqlArgs[0] + ", " + sqlArgs[1] + ")"
+                    </value>
+                </entry>
+            </map>
+        </property>
+
+        <!-- Some db have identifiers limit in characters - "true", some in bytes - "false" -->
+        <property name="dbIdentifiersLimitInChars" value="true"/>
+
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="BEFORE_FIELD_LIST" value="top _row_limit_"/>
+                <!-- need to do subquery in the case of unions -->
+                <entry key="AT_BEGINNING_OF_UNION" value="select top _row_limit_ * from ("/>
+                <entry key="BEFORE_ORDER_BY_OF_UNION" value=") as zzz_result_set"/>
+            </map>
+        </property>
+
+        <!-- In sql server, if you create a boolean calc field in a domain, then use it in a filter, like "foo(x) == true",
+             the SQLGenerator will take out the "== true" by default, which will be invalid SQL.
+             Change booleanOptimizeable to "false" to keep this in, which translates the function to "foo(x) = 1".
+             This fixes bug 28868, but makes some of the audit queries break.
+          -->
+        <property name="booleanOptimizeable" value="true"/>
+    </bean>
+
+    <!-- ingres mostly the same as sql server, except use "first" instead of "top" -->
+    <bean id="ingresGenerator" parent="sqlserverGenerator" scope="prototype">
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="BEFORE_FIELD_LIST" value="first _row_limit_"/>
+                <!-- need to do subquery in the case of unions -->
+                <entry key="AT_BEGINNING_OF_UNION" value="select first _row_limit_ * from ("/>
+                <entry key="BEFORE_ORDER_BY_OF_UNION" value=") as zzz_result_set"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="mmxSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map merge="true">
+                <!-- Mid is the Excel name for 'substring' -->
+                <entry key="Mid">
+                    <value>
+                        return "substring(" + sqlArgs[0] + ", " + sqlArgs[1] + (sqlArgs.size() == 3 ? ", " + sqlArgs[2]
+                        : "") + ")"
+                    </value>
+                </entry>
+            </map>
+        </property>
+
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="limit _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+
+
+    <bean id="verticaSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map merge="true">
+                <!-- JRS-11058 -->
+                <entry key="Timestamp">
+                    <value>sqlArgs[0]</value>
+                </entry>
+                <entry key="sum">
+                    <value>"sum_float(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="addNULLPlaceHolder">
+                    <value>
+                        def dType = args[0].value;
+                        if ((dType == "Long") || (dType == "Integer") || (dType == "Decimal") || (dType == "Date") ||
+                        (dType == "Timestamp") || (dType == "Boolean"))
+                        return "cast(NULL as " + args[0].value + ")"
+                        else return "NULL"
+                    </value>
+                </entry>
+
+                <entry key="StartsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like " + sqlArgs[1] + " || '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="EndsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' || " + sqlArgs[1]
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " ilike '%' || " + sqlArgs[1] + " || '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " ilike '%" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="Concatenate">
+                    <value>"(" + sqlArgs.join(" || ") + ")"</value>
+                </entry>
+
+                <entry key="Boolean">
+                    <value>
+                        Boolean.valueOf(args[0].value) ? "true" : "false"
+                    </value>
+                </entry>
+            </map>
+        </property>
+
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="limit _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="mysqlSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="Year">
+                    <value>"year(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"month(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"day(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"hour(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"minute(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"second(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="Integer">
+                    <value>
+                        return GroovyUtils.getInstance(this.binding).cast("unsigned");
+                    </value>
+                </entry>
+                <entry key="Decimal">
+                    <value>
+                        return GroovyUtils.getInstance(this.binding).cast("decimal", 20, 10);
+                    </value>
+                </entry>
+            </map>
+        </property>
+
+
+        <!--   Mid / substr   uses default DB generator -->
+
+        <!-- how to do limits -->
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="limit _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="teiidSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="usePlainStringForDecimal" value="true" />
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="Timestamp">
+                    <value>
+                        def formatString = "yyyy-MM-dd HH:mm:ss.SSS"
+                        def timestampString = new java.text.SimpleDateFormat(formatString).format(args[0].value)
+                        return "PARSETIMESTAMP('$timestampString', '$formatString')"
+                    </value>
+                </entry>
+                <entry key="Year">
+                    <value>"YEAR(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"MONTH(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"DAYOFMONTH(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"HOUR(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"MINUTE(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"SECOND(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="dayofmonth">
+                    <value>"DAYOFMONTH(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="week">
+                    <value>"WEEK(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="str2int">
+                    <value>"cast(" + sqlArgs[0] + " as String)"</value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like concat('%', concat(" + sqlArgs[1] + ", '%'))"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="Round">
+                    <value>
+                        if (sqlArgs.size() == 1)
+                        return "round(" + sqlArgs[0] + ", 0)"
+                        else
+                        return "round(" + sqlArgs[0] + ", " + sqlArgs[1] + ")"
+                    </value>
+                </entry>
+                <entry key="Mid">
+                    <value>
+                        return "substring(" + sqlArgs[0] + ", " + sqlArgs[1] + (sqlArgs.size() == 3 ? ", " + sqlArgs[2]
+                        : "") + ")"
+                    </value>
+                </entry>
+            </map>
+        </property>
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="limit _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="dataDirectSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <!-- property name="excludeFunctionTemplates">
+            <list>
+                <value>Integer</value>
+            </list>
+        </property -->
+        <property name="usePlainStringForDecimal" value="true" />
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="Boolean">
+                    <value>
+                        Boolean.valueOf(args[0].value).toString().toUpperCase()
+                    </value>
+                </entry>
+                <entry key="Decimal">
+                    <value>return sqlArgs[0]</value>
+                </entry>
+                <entry key="Date">
+                    <value>"cast(" + sqlArgs[0] + " as date)"</value>
+                </entry>
+                <entry key="Timestamp">
+                    <value>"cast(" + sqlArgs[0] + " as timestamp)"</value>
+                </entry>
+                <entry key="Time">
+                    <value>"cast(" + sqlArgs[0] + " as time)"</value>
+                </entry>
+                <entry key="Year">
+                    <value>"year(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"month(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"day(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"hour(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"minute(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"second(" + sqlArgs[0] + ")"</value>
+                </entry>
+            </map>
+        </property>
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="limit _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="sparkDataDirectSQLGenerator" parent="dataDirectSQLGenerator" scope="prototype">
+        <!-- WORKAROUND for Spark Issue -->
+        <!-- Spark allocates memory for ALL limited rows, even though actual rows are less than limited rows -->
+        <!-- http://jira.jaspersoft.com/browse/JRS-8988 -->
+        <!-- WORKAROUND:  when set to fetch all rows, ignore limit clause for spark  -->
+        <property name="ignoreLimitWhenFetchingAllRows" value="true" />
+    </bean>
+
+    <bean id="simbaSQLGenerator" parent="sqlserverGenerator" scope="prototype">
+        <!-- property name="excludeFunctionTemplates">
+            <list>
+                <value>Integer</value>
+            </list>
+        </property -->
+        <property name="usePlainStringForDecimal" value="true" />
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="Today">
+                    <value>"curdate()"</value>
+                </entry>
+                <entry key="Decimal">
+                    <value>return sqlArgs[0]</value>
+                </entry>
+                <entry key="Date">
+                    <value>"{d " + sqlArgs[0] + "}"</value>
+                </entry>
+                <entry key="Timestamp">
+                    <value>"{ts " + sqlArgs[0] + "}"</value>
+                </entry>
+                <entry key="Year">
+                    <value>"YEAR(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"MONTH(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"DAYOFMONTH(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="hour">
+                    <value>"HOUR(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="minute">
+                    <value>"MINUTE(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="second">
+                    <value>"SECOND(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="dayofmonth">
+                    <value>"DAYOFMONTH(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="week">
+                    <value>"WEEK(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="Length">
+                    <value>"length(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' + " + sqlArgs[1] + " + '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="Mid">
+                    <value>
+                        return "substring(" + sqlArgs[0] + ", " + sqlArgs[1] + (sqlArgs.size() == 3 ? ", " + sqlArgs[2]
+                        : "") + ")"
+                    </value>
+                </entry>
+            </map>
+        </property>
+        <property name="limitSQLMap">
+            <map>
+                <entry key="BEFORE_FIELD_LIST" value="TOP _row_limit_"/>
+                <!-- need to do subquery in the case of unions -->
+                <entry key="AT_BEGINNING_OF_UNION" value="select top _row_limit_ * from ("/>
+                <entry key="BEFORE_ORDER_BY_OF_UNION" value=") as zzz_result_set"/>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="simbaSparkSQLGenerator" parent="simbaSQLGenerator" scope="prototype">
+    </bean>
+
+    <bean id="simbaGoogleBigQuerySQLGenerator" parent="sqlserverGenerator" scope="prototype">
+        <!-- property name="excludeFunctionTemplates">
+            <list>
+                <value>Integer</value>
+            </list>
+        </property -->
+        <property name="usePlainStringForDecimal" value="true" />
+        <property name="limitSQLMap">
+            <map>
+                <entry key="AT_END" value="limit _row_limit_"/>
+            </map>
+        </property>
+    </bean>
+
+
+    <bean id="sqlAnywhereSQLGenerator" parent="defaultSQLGenerator" scope="prototype">
+        <property name="usePlainStringForDecimal" value="true" />
+        <property name="functionTemplates">
+            <map merge="true">
+                <entry key="StartsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like " + sqlArgs[1] + " + '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="EndsWith">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' + " + sqlArgs[1]
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "'"
+                    </value>
+                </entry>
+                <entry key="Contains">
+                    <value>
+                        def search = args[1].value;
+                        if (search == null)
+                        return sqlArgs[0] + " like '%' + " + sqlArgs[1] + " + '%'"
+                        if (! (search instanceof String)) { search = search.value }
+                        return sqlArgs[0] + " like '%" + search.replace("'","''") + "%'"
+                    </value>
+                </entry>
+                <entry key="Boolean">
+                    <value>args[0].value ? "1" : "0"</value>
+                </entry>
+                <entry key="Concatenate">
+                    <value>sqlArgs.join(" + ")</value>
+                </entry>
+                <entry key="Length">
+                    <value>"length(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="str2int">
+                    <value>"cast(" + sqlArgs[0] + " as numeric(10,0))"</value>
+                </entry>
+                <!-- Mid is the Excel name for 'substring' -->
+                <entry key="Mid">
+                    <value>"substring(" + sqlArgs[0] + ", " + sqlArgs[1] + ", length(" + sqlArgs[0] + "))"</value>
+                </entry>
+                <entry key="date">
+                    <value>"DATE(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="time">
+                    <value>"DATETIME(" + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="Timestamp">
+                    <value>sqlArgs[0]</value>
+                </entry>
+                <entry key="Year">
+                    <value>"DATEPART(year, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="MonthNumber">
+                    <value>"DATEPART(month, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="DayNumber">
+                    <value>"DATEPART(day, " + sqlArgs[0] + ")"</value>
+                </entry>
+                <entry key="wrapBooleanExpression">
+                    <value>"case when (" + sqlArgs[0] + ") then (" + '1' + ") else (" + '0' + ") end"
+                    </value>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <!-- jdbcQuery is just like jdbcTable except it has a "custom" query which gets wrapped as a subquery -->
+    <bean id="jdbcQueryTemplate" parent="jdbcTableTemplate" class="com.jaspersoft.commons.semantic.dsimpl.JdbcQueryDataSet" scope="prototype">
+        <property name="configuration" ref="slConfig"/>
+    </bean>
+
+    <!-- Template for a "custom" query data set
+         Put in a hook that will cause MySQL JDBC to stream its result set rather than buffer it
+      -->
+    <bean id="jrQueryTemplate" class="com.jaspersoft.commons.semantic.dsimpl.JRQueryDataSet"  parent="baseDataSetTemplate" scope="prototype">
+        <property name="dbConfigFactory" ref="dbServerTypeConfigFactory"/>
+        <property name="queryInterceptor">
+            <bean class="com.jaspersoft.commons.datarator.jr.MySQLStreamer"/>
+        </property>
+    </bean>
+
+    <!-- Template for a domain query data set (used to save field list in domain topic)
+      -->
+    <bean id="domainQueryTemplate" class="com.jaspersoft.commons.semantic.dsimpl.DomainQueryDataSet" parent="baseDataSetTemplate" scope="prototype">
+    </bean>
+
+    <!-- Template for memory data set 
+       Give it a pointer to the cache impl, and its own expressionFactory impl
+       TODO: implement the same functions as for the jdbcTable
+    -->
+
+    <bean id="memoryDataSetTemplate" class="com.jaspersoft.commons.semantic.dsimpl.memory.MemoryDataSet" parent="baseDataSetTemplate" scope="prototype">
+        <property name="cache" ref="dataSetCache"/>
+    </bean>
+
+    <bean id="nullDataSetTemplate" class="com.jaspersoft.commons.semantic.dsimpl.memory.NullDataSet" parent="memoryDataSetTemplate" scope="prototype"/>
+
+    <!--
+      templates for data set refs
+    -->
+    <bean id="joinedDataSetRefTemplate" class="com.jaspersoft.commons.semantic.dsimpl.JoinedDataSetReference"  parent="baseDataSetTemplate" scope="prototype">
+    </bean>
+
+    <bean id="dataSetRefTemplate" class="com.jaspersoft.commons.semantic.dsimpl.DataSetReference"  parent="baseDataSetTemplate" scope="prototype">
+    </bean>
+
+    <!-- 
+      This is the expression evaluator for datasets, which only differs
+      in using an impl which is a subclass of the perent expression evaluator.
+    -->
+    <bean id="domainDataSetExpressionEvaluator" parent="expressionEvaluator"
+          class="com.jaspersoft.commons.semantic.dsimpl.DomainDataSetExpressionEvaluator"/>
+    <!-- 
+        This is similar to the domain version but is used for working datasets (see aC-adhoc.xml)
+      -->
+    <bean id="dataSetExpressionEvaluator" parent="expressionEvaluator"
+          class="com.jaspersoft.commons.datarator.DataSetExpressionEvaluator"/>
+
+    <!-- jdbc ds factory -->
+    <!-- new: we're using JDBC standard data types, although we may want to tweak them
+         in particular, BigDecimal and BigInteger are mem hogs
+      -->
+    <bean name="jdbcDataSetFactory" class="com.jaspersoft.commons.semantic.dsimpl.JdbcDataSetFactory">
+        <property name="adhocEngine" ref="adhocEngineService"/>
+        <!-- map from SQL types to Java types -->
+        <property name="typeMap">
+            <map>
+                <entry key="bit" value="java.lang.Boolean"/>
+                <entry key="tinyint" value="java.lang.Byte"/>
+                <entry key="smallint" value="java.lang.Short"/>
+                <entry key="integer" value="java.lang.Integer"/>
+                <entry key="bigint" value="java.lang.Long"/>
+                <entry key="real" value="java.lang.Float"/>
+                <entry key="float" value="java.lang.Float"/>
+                <entry key="double" value="java.lang.Double"/>
+                <entry key="numeric" value="java.math.BigDecimal"/>
+                <entry key="decimal" value="java.math.BigDecimal"/>
+                <entry key="char" value="java.lang.String"/>
+                <entry key="varchar" value="java.lang.String"/>
+                <entry key="longvarchar" value="java.lang.String"/>
+                <entry key="clob" value="java.lang.String"/>
+                <!-- for some reason, JR likes java.sql.Timestamp but not java.sql.Date -->
+                <entry key="date" value="java.util.Date"/>
+                <entry key="time" value="java.sql.Time"/>
+                <entry key="timestamp" value="java.sql.Timestamp"/>
+                <entry key="default" value="java.lang.String"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- hibernate ds factory -->
+    <bean name="hibernateDataSetFactory" class="com.jaspersoft.commons.semantic.dsimpl.HibernateDataSetFactory">
+        <property name="adhocEngine" ref="adhocEngineService"/>
+    </bean>
+
+    <bean id="semanticLayerDataSourceServiceFactoryDefinition"
+          class="com.jaspersoft.jasperserver.api.engine.jasperreports.util.DataSourceServiceDefinition">
+        <property name="dataSourceInterface"
+                  value="com.jaspersoft.commons.semantic.datasource.SemanticLayerDataSource"/>
+        <property name="serviceBeanName" value="semanticLayerDataSourceServiceFactory"/>
+        <property name="anyLanguage" value="true"/>
+    </bean>
+
+    <bean id="semanticLayerDataSourceServiceFactory"
+          class="com.jaspersoft.commons.semantic.datasource.impl.SemanticLayerDataSourceServiceFactory">
+        <property name="semanticLayerFactoryBeanName" value="semanticLayerFactory"/>
+        <property name="profileAttributesResolver" ref="profileAttributesResolver"/>
+    </bean>
+
+    <bean id="dataDefinerUnitDataSourceServiceFactoryDefinition"
+          class="com.jaspersoft.jasperserver.api.engine.jasperreports.util.DataSourceServiceDefinition">
+        <property name="dataSourceInterface"
+                  value="com.jaspersoft.commons.semantic.DataDefinerUnit"/>
+        <property name="serviceBeanName" value="DataDefinerUnitSourceServiceFactory"/>
+        <property name="anyLanguage" value="true"/>
+    </bean>
+
+    <bean id="DataDefinerUnitSourceServiceFactory"
+          class="com.jaspersoft.commons.semantic.datasource.impl.DataDefinerUnitDataSourceServiceFactory">
+        <property name="engineService" ref="engineService"/>
+        <property name="repositoryService" ref="${bean.repositoryService}"/>
+    </bean>
+
+
+    <!-- Hibernate config files -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="addHibernateConfig"/>
+        <property name="value">
+            <list>
+                <value>/com/jaspersoft/commons/semantic/datasource/impl/hibernate/RepoSemanticLayerDataSource.hbm.xml
+                </value>
+                <value>/com/jaspersoft/commons/semantic/impl/DataDefinerUnit.hbm.xml</value>
+            </list>
+        </property>
+        <property name="valueType" value="stringList"/>
+    </bean>
+
+    <!-- client class mapping -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="mapClientClass"/>
+        <property name="value">
+            <map>
+                <entry key="com.jaspersoft.commons.semantic.datasource.SemanticLayerDataSource"
+                       value="com.jaspersoft.commons.semantic.datasource.impl.SemanticLayerDataSourceImpl"/>
+                <entry key="com.jaspersoft.commons.semantic.DataDefinerUnit"
+                       value="com.jaspersoft.commons.semantic.impl.DataDefinerUnitImpl"/>
+            </map>
+        </property>
+        <property name="valueType" value="stringMap"/>
+    </bean>
+
+    <!-- repo class mapping -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="mapRepoClass"/>
+        <property name="value">
+            <map>
+                <entry key="com.jaspersoft.commons.semantic.datasource.SemanticLayerDataSource"
+                       value="com.jaspersoft.commons.semantic.datasource.impl.hibernate.RepoSemanticLayerDataSource"/>
+                <entry key="com.jaspersoft.commons.semantic.datasource.SemanticLayerDataSourceBundle"
+                       value="com.jaspersoft.commons.semantic.datasource.impl.hibernate.RepoSemanticLayerDataSourceBundle"/>
+                <entry key="com.jaspersoft.commons.semantic.DataDefinerUnit"
+                       value="com.jaspersoft.commons.semantic.impl.hibernate.RepoDataDefinerUnit"/>
+            </map>
+        </property>
+        <property name="valueType" value="stringMap"/>
+    </bean>
+
+    <!-- MetaData Factory -->
+    <bean name="metaDataFactoryFactory" class="com.jaspersoft.commons.semantic.metaapi.impl.MetaDataFactoryFactoryImpl">
+        <property name="implementationObjectFactory" ref="mappingResourceFactory"/>
+        <property name="dataSourceTypeMapping">
+            <map>
+                <entry key="com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.JdbcReportDataSource"
+                       value-ref="baseJdbcMetaDataFactory"/>
+                <entry key="com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.JndiJdbcReportDataSource"
+                       value-ref="baseJdbcMetaDataFactory"/>
+                <entry key="com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.VirtualReportDataSource"
+                       value-ref="virtualMetaDataFactory"/>
+                <entry key="com.jaspersoft.commons.semantic.datasource.SemanticLayerDataSource"
+                       value-ref="domainMetaDataFactory"/>
+                <entry key="com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.AwsReportDataSource"
+                       value-ref="baseJdbcMetaDataFactory"/>
+                <entry key="com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.AzureSqlReportDataSource"
+                       value-ref="baseJdbcMetaDataFactory"/>
+                <entry key="com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.CustomReportDataSource"
+                       value-ref="customDataSourceMetaDataFactory">
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean name="jdbcMetaConfiguration" class="com.jaspersoft.commons.semantic.metaapi.impl.jdbc.JdbcMetaConfiguration">
+        <property name="jdbc2JavaTypeMapping">
+            <map>
+                <!--entry key="ARRAY" value=""/-->
+                <entry key="BIGINT" value="java.lang.Long"/>
+                <!--entry key="BINARY" value=""/-->
+                <entry key="BIT" value="java.lang.Boolean"/>
+                <entry key="BOOLEAN" value="java.lang.Boolean"/>
+                <!--entry key="BLOB" value=""/-->
+                <entry key="CHAR" value="java.lang.String"/>
+                <!--entry key="CLOB" value=""/-->
+                <entry key="DATE" value="java.util.Date"/>
+                <entry key="DECIMAL" value="java.math.BigDecimal"/>
+                <!--entry key="DISTINCT" value=""/-->
+                <entry key="DOUBLE" value="java.lang.Double"/>
+                <entry key="FLOAT" value="java.lang.Float"/>
+                <entry key="INTEGER" value="java.lang.Integer"/>
+                <!--entry key="JAVA_OBJECT" value=""/-->
+                <!--entry key="LONGVARBINARY" value=""/-->
+                <entry key="LONGVARCHAR" value="java.lang.String"/>
+                <!--entry key="NULL" value=""/-->
+                <entry key="NUMERIC" value="java.math.BigDecimal"/>
+                <entry key="OTHER">
+                    <map>
+                        <entry key="NVARCHAR2" value="java.lang.String"/>
+                        <entry key="uuid" value="java.lang.String"/>
+                    </map>
+                </entry>
+                <entry key="REAL" value="java.lang.Double"/>
+                <!--entry key="REF" value=""/-->
+                <entry key="SMALLINT" value="java.lang.Short"/>
+                <!--entry key="STRUCT" value=""/-->
+                <entry key="TIME" value="java.sql.Time"/>
+                <entry key="TIMESTAMP" value="java.sql.Timestamp"/>
+                <entry key="TINYINT" value="java.lang.Byte"/>
+                <!--entry key="VARBINARY" value=""/-->
+                <entry key="VARCHAR" value="java.lang.String"/>
+                <entry key="NVARCHAR" value="java.lang.String"/>
+                <entry key="ARRAY" value="java.lang.String"/>
+            </map>
+        </property>
+        <!-- This mapping is an addition to default mapping java.sql.Types,
+             it means that application takes information from java.sql.Types,
+             but you can override them here -->
+        <property name="codeToJdbcTypeMapping">
+            <map>
+                <!-- entry key="<code>" value="<field name>" -->
+                <!-- -101 is TIMESTAMP WITH TIME ZONE in Oracle, mapped to TIMESTAMP -->
+                <entry key="-101" value="TIMESTAMP"/>
+                <!-- -102 is TIMESTAMP WITH LOCAL TIME ZONE in Oracle, mapped to TIMESTAMP -->
+                <entry key="-102" value="TIMESTAMP"/>
+                <!-- 1111 is TIMESTAMP WITH PRECISION OF FRANCTIONAL SECONDS in Oracle, mapped to TIMESTAMP -->
+                <entry key="1111" value="TIMESTAMP"/>
+                <!-- 100 is BINARY_FLOAT in Oracle, mapped to FLOAT -->
+                <entry key="100" value="FLOAT"/>
+                <!-- 101 is BINARY_DOUBLE in Oracle, mapped to DOUBLE -->
+                <entry key="101" value="DOUBLE"/>
+                <!-- 2005 is CLOB in Teiid VDS, mapped to LONGVARCHAR -->
+                <entry key="2005" value="LONGVARCHAR"/>
+            </map>
+        </property>
+        <property name="tableTypes">
+            <list>
+                <value>TABLE</value>
+                <value>VIEW</value>
+                <!--value>SYSTEM TABLE</value-->
+                <!--value>GLOBAL TEMPORARY</value-->
+                <!--value>LOCAL TEMPORARY</value-->
+                <value>ALIAS</value>
+                <value>SYNONYM</value>
+            </list>
+        </property>
+        <property name="excludeTablesPattern">
+            <value><![CDATA[^BIN\$.*]]></value>
+        </property>
+        <property name="includeTablesPattern">
+            <value><![CDATA[.*]]></value>
+        </property>
+        <property name="includeSynonymsForOracle">
+            <!-- set 'true' if you use Oracle synonyms in Domains  -->
+            <value>false</value>
+        </property>
+        <property name="useColumnLabelInDerivedTables">
+            <!-- set 'true' to use getColumnLabel() for column references, 'false' to use getColumnName()  -->
+            <value>true</value>
+        </property>
+        <property name="columnNameEscapingRegexp" value="\s|#|%|&amp;|\(|\)|\[|\]|:|,|'|&gt;|&lt;|\+|\-|/" />    <!--    replacing chars: <space> # % & ( ) [ ] : , < > + - /  -->
+    </bean>
+
+    <bean name="baseJdbcMetaDataFactory"
+          class="com.jaspersoft.commons.semantic.metaapi.impl.jdbc.BaseJdbcMetaDataFactoryImpl">
+        <property name="engineService" ref="engineService"/>
+        <property name="objectTypeMapper" ref="objectTypeMapper"/>
+        <property name="jdbcMetaConfiguration" ref="jdbcMetaConfiguration"/>
+        <property name="profileAttributesResolver" ref="profileAttributesResolver"/>
+        <property name="turnOnSetMaxRowsTo1ForDerivedTable">
+            <!-- set 'true' to use setMaxRows(1) for derived table metadata, 'false ' to retrieve all data   -->
+            <value>true</value>
+        </property>
+        <property name="turnOffAutoCommitForDerivedTable">
+            <!-- set 'true' to turn off auto commit when executing derived table select statement, 'false ' to use auto commit   -->
+            <value>true</value>
+        </property>
+    </bean>
+
+    <bean name="virtualMetaDataFactory" parent="baseJdbcMetaDataFactory"
+          class="com.jaspersoft.commons.semantic.metaapi.impl.jdbc.VirtualDataSourceMetaDataFactoryImpl" />
+
+    <bean name="customDataSourceMetaDataFactory" parent="baseJdbcMetaDataFactory"
+          class="com.jaspersoft.commons.semantic.metaapi.impl.CustomDataSourceMetaDataFactoryImpl"/>
+
+    <bean name="domainMetaDataFactory" class="com.jaspersoft.commons.semantic.metaapi.impl.domain.DomainMetaDataFactoryImpl">
+        <property name="engineService" ref="engineService"/>
+        <property name="repository" ref="${bean.repositoryService}"/>
+    </bean>
+
+    <bean id="dbTypesToStrategyMappingPro" class="java.util.HashMap" parent="dbTypesToStrategyMappingCe">
+        <constructor-arg index="0" type="java.util.Map">
+            <map merge="true">
+                <entry key="Oracle">
+                    <bean class="com.jaspersoft.commons.semantic.metaapi.impl.jdbc.OracleSqlEscapingStrategy" />
+                </entry>
+            </map>
+        </constructor-arg>
+    </bean>
+
+    <!-- Validation -->
+    <bean name="domainXMLValidator" class="com.jaspersoft.commons.semantic.validate.impl.DomainXMLValidatorImpl">
+        <!--
+        <property name="schemaXsdPath" value="/com/jaspersoft/commons/semantic/validate/schema_1_0.xsd"/>
+        -->
+
+        <property name="schemaXsdPath" value="/com/jaspersoft/commons/semantic/validate/schema_1_3.xsd"/>
+        <property name="securityXsdPath" value="/com/jaspersoft/commons/semantic/validate/security_1_1.xsd"/>
+        <property name="profileAttributesResolver" ref="profileAttributesResolver"/>
+    </bean>
+
+    <bean name="domainValidator" class="com.jaspersoft.commons.semantic.validate.impl.DomainValidatorImpl">
+        <property name="domainXMLValidator" ref="domainXMLValidator"/>
+        <property name="semanticLayerFactory" ref="semanticLayerFactory"/>
+        <property name="metaDataFactoryFactory" ref="metaDataFactoryFactory"/>
+    </bean>
+
+    <!-- Data Source Tree Data Provider for Domains -->
+    <bean name="dataSourceTreeDataProvider" class="com.jaspersoft.commons.semantic.tree.DataSourceTreeDataProvider"
+          scope="prototype">
+        <property name="repositoryService" ref="${bean.repositoryService}"/>
+        <property name="supportedClasses">
+            <list>
+                <value>com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.JdbcReportDataSource</value>
+                <value>com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.AwsReportDataSource</value>
+                <value>com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.AzureSqlReportDataSource</value>
+                <value>com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.JndiJdbcReportDataSource</value>
+                <value>com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.VirtualReportDataSource</value>
+                <value>com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.CustomReportDataSource</value>
+            </list>
+        </property>
+        <property name="dataSourceServiceFactories" ref="dataSourceServiceFactories"/>
+    </bean>
+
+    <!-- SL configuration -->
+    <bean name="slConfig" class="com.jaspersoft.commons.semantic.ConfigurationObject">
+        <property name="messageSource" ref="messageSource"/>
+        <!-- Deprecated: Use jasperserver_config.properties to configure date and time formats f
+        or Query Builder and Domain Designer-->
+        <!--<property name="dateFormat" value="MMM dd yyyy"/>-->
+        <!--<property name="dateTimeFormat" value="MMM dd yyyy HH:mm:ss"/>-->
+        <!--<property name="timeFormat" value="HH:mm:ss"/>-->
+        <property name="maxAvailableValues" value="10000"/>
+        <property name="tempFolderUri" value="/temp"/>
+        <property name="defaultFolderUri" value="/adhoc/topics"/>
+        <property name="maxExecutionTimeSec" value="360"/>
+        <property name="maxResultSetRows" value="200000"/>
+
+        <!--
+            2014-12-05  thorick
+            Note:  skipping Domain Database Validation will also turn off domain schema Advanced Joins Complex Joins validation
+            http://bugzilla.jaspersoft.com/show_bug.cgi?id=40342
+        -->
+        <property name="skipDomainDatabaseValidation" value="false"/>
+        <property name="skipDatabaseSchemaValidation" value="true"/>
+        <property name="additionalParameterMap">
+            <map>
+                <entry key="maxTopicName" value="100"/>
+                <entry key="maxTopicDescription" value="300"/>
+            </map>
+        </property>
+        <property name="jrxmlDebugPath" value="e:/projects/topic2jrxml.out"/>
+        <!--<property name="design2schemaDebugPath" value="d:/design2schema.txt"/>-->
+        <property name="saveTopicURIPatternList">
+            <list>
+                <value><![CDATA[%/adhoc/topics]]></value>
+                <value><![CDATA[/public/adhoc/topics]]></value>
+            </list>
+        </property>
+        <property name="ignoreTimeInTimestampFilter" value="false"/>
+        <!--
+            By default al timestamps (where clause in sql) in filter will be form mated in default (system) timezone.
+            This behavior can be changed using "useDataSourceTimeZoneInSQL" bean/property.
+            If it's set to 'true' timestamps in sql will be formatted in datasource timezone,
+            which can be TimeZone drop down on Edit Datasource properties (Note: Default database settings equal GMT-0).
+        -->
+        <property name="useDataSourceTimeZoneInSQL" value="true"/>
+        <property name="canViewQuery" value="false" />
+        <!-- 
+            Select a limit for multiselect input controls
+            (Part of the fix for JS-32481: filter on export/report is different from filter in Ad Hoc view)
+            If this setting is false, then a multiselect with a value count greater than Ad Hoc Dataset Row Limit (default 200k)
+            will be turned into a fixed select list.
+            If this setting is true, the Ad Hoc Filter List of Values Row Limit (default 10k) is used as the threshold instead. 
+        -->
+        <property name="limitMultiSelectWithMaxAvailableValues" value="false"/>
+
+        <!--
+            Domain Designer: Javascript validation regex for the derived table query
+            Default regex: query must start with SELECT (case insensitive) or with {
+        -->
+        <property name="domainDesignerDerivedTableQueryRegex" value="^\s*select\s+([^\s]+(\s+|$)){3,}|^\s*\{\s*attribute\s*\('.+'\)\s*\}\s*$"/>
+    </bean>
+
+    <bean id="tooManyRowsUIExceptionProcessor" class="com.jaspersoft.commons.semantic.util.TooManyRowsUIExceptionProcessor"/>
+
+    <bean id="expressionBuilderFactory" class="com.jaspersoft.commons.semantic.ExpressionBuilderFactory">
+        <property name="formatTimestampInGMT" ref="saveTimestampFilterInGMT" />
+    </bean>
+
+    <!--
+    This bean can be used
+    to change way how JasperServer Pro will store filters information in states.
+    Default value is false which means that all timestamps will be formatted/parsed
+    in default timezone (System timezone on jvm start).
+    If it's set to true that will cause to change internal representation of timestamps to GMT-0 (in schema.xml, stateXML.data or <dashboard_id>.xml).
+    Existing views/domains/daschboard will continue work but server format/parse timestamps in GMT-0 timezone:
+     -->
+    <!-- Also used in datarator-el by expressionEvaluator -->
+    <bean id="saveTimestampFilterInGMT" class="java.lang.Boolean">
+        <constructor-arg value="false"/>
+    </bean>
+
+    <!-- Graph Operations -->
+    <bean name="graphOperations" class="com.jaspersoft.commons.semantic.graphutil.GraphOperations">
+        <!-- This bean has a single property, "specialOptimizationOn", that is used to determine           -->
+        <!-- determine whether or not a very special optimization will be done that notices the FIRST      -->
+        <!-- shortest path has been found between 2 input tables (nodes).  The need for this               -->
+        <!-- configurable boolean will be eliminated with an improvement in the basic graph algorithm      -->
+        <!-- that is used to determine what set of tables are needed to join a set of fields in various    -->
+        <!-- tables that are not all directly connected (via joins) to one another.  Certain database      -->
+        <!-- topologies that have a large number of mutually connected tables will want to set this        -->
+        <!-- boolean flag to "true" (the default is "false") - the default value of "false" will NOT       -->
+        <!-- perform the optimization and will ALWAYS find the correct set of tables needed to connect     -->
+        <!-- a set of input fields - but setting this boolean to "true" can significantly improve (by a    -->
+        <!-- factor of about 10) the performance, i.e., the time needed to find that correct set of tables -->
+        <!-- needed to properly connect a set of input fields for an adhoc view                            -->
+        <property name="specialOptimizationOn" value="false"/>
+    </bean>
+
+    <bean id="profileAttributeServiceWrapper" class="com.jaspersoft.commons.semantic.impl.ProfileAttributesServiceWrapper">
+        <property name="profileAttributeService" ref="profileAttributeService"/>
+        <property name="messageSource" ref="messageSource"/>
+        <property name="profileAttributeCategories" ref="${bean.profileAttributeCategories}"/>
+        <property name="profileAttributeCache" ref="profileAttributeCache"/>
+        <property name="configuration" ref="configurationBean"/>
+    </bean>
+
+</beans>
+

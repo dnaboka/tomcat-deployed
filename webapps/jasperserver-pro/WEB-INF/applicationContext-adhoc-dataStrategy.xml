@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+		http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+    <context:component-scan base-package="com.jaspersoft.jasperserver.war.cascade,com.jaspersoft.commons.dimengine.formatting"/>
+
+    <bean id="dataStrategyService" class="com.jaspersoft.ji.adhoc.strategy.DataStrategyServiceImpl">
+        <!-- all data strategy beans, enabled or disabled
+             we used to have just one list, but it could be modified by ad hoc settings, which assumes it knows what order to put things in
+             more specific data strategies have to be tested first, so the order is crucial
+         -->
+        <property name="allDataStrategyBeans">
+            <list>
+                <!-- data strategy when we are using a staged domain topic that we set up -->
+                <value>stagedDomainDataStrategy</value>
+                <!-- domain with optimization on -->
+                <value>domainDataStrategy</value>
+                <!-- generate SQL by wrapping a query from a topic (not enabled by default) -->
+                    <value>sqlQueryDataStrategy</value>
+                <!--
+                    a version of classic strategy for domains, which is a fallback for domain based queries if domainDataStrategy is off
+                  -->
+                <value>classicDomainDataStrategy</value>
+
+                <!-- for OLAP connections -->
+                <value>mdxDataStrategy</value>
+
+                <!-- fallback strategy (old school ad hoc, load all in memory) 
+					 NEW! now with grooviness (domain EL filters & calc fields in Groovy)! 
+				  -->
+                <value>newClassicDataStrategy</value>
+            </list>
+        </property>
+        <!-- this contains the enabled data strategy beans from the list above -->
+        <!-- this can be modified by Ad Hoc settings; at startup, this is initialized with saved settings from the repo -->
+        <property name="dataStrategyBeans">
+            <list>
+                <value>stagedDomainDataStrategy</value>
+                <value>domainDataStrategy</value>
+                <value>classicDomainDataStrategy</value>
+                <value>mdxDataStrategy</value>
+                <value>newClassicDataStrategy</value>
+            </list>
+        </property>
+
+        <property name="wrapper">
+            <bean class="com.jaspersoft.ji.adhoc.strategy.DataStrategyUnroller">
+                <property name="uddsStrategyBeanName" value="uddsStrategy"/>
+                <property name="flattenStrategyBeanName" value="flattenStrategy"/>
+            </bean>
+        </property>
+    </bean>
+
+
+
+    <!--
+        service called by quartz job to look for staged DataDefinerUnits and load the datasets
+     -->
+    <bean id="stagingService" class="com.jaspersoft.ji.adhoc.strategy.staging.DataDefinerStagingService">
+        <!-- set this to true to enable the staging service, and to enable staging fields in the data definer -->
+        <property name="enabled" value="false"/>
+        <property name="repositoryService" ref="mtRepositoryService"/>
+        <property name="securityContextProvider" ref="${bean.securityContextProvider}"/>
+        <property name="searchCriteriaFactory" ref="searchCriteriaFactory"/>
+        <property name="adhocMetadataFactory" ref="adhocMetadataFactory"/>
+        <property name="adhocEngineService" ref="adhocEngineService"/>
+        <property name="dataStrategyService" ref="dataStrategyService"/>
+        <property name="repositoryPathTransformer" ref="repositoryPathTransformer"/>
+        <property name="loggingContextProvider" ref="${bean.loggingContextProvider}"/>
+        <property name="domainFactory" ref="semanticLayerFactory"/>
+        <property name="profileAttributesServiceWrapper" ref="profileAttributeServiceWrapper"/>
+        <property name="threadCount" value="10"/>
+        <property name="prefetchMinutes" value="10"/>
+       <!-- <property name="scheduler" ref="maintenanceScheduler"/>-->
+    </bean>
+
+
+    <bean id="dataStagingConfig" class="com.jaspersoft.commons.semantic.staging.DataStagingConfig">
+        <!-- min minutes is 10 minutes -->
+        <property name="minMinutes" value="10"/>
+        <!-- max minutes is 7 days -->
+        <property name="maxMinutes" value="10080"/>
+    </bean>
+
+    <bean id="stagingTrigger" class="org.springframework.scheduling.quartz.CronTriggerFactoryBean">
+        <property name="jobDetail" ref="stagingJob"/>
+        <!-- every five minutes, check for stuff that needs refreshing -->
+        <property name="cronExpression" value="0 0/15 * * * ?"/>
+    </bean>
+    <bean id="stagingJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+        <property name="targetObject" ref="stagingService"/>
+        <property name="targetMethod" value="loadStagedDatasets"/>
+    </bean>
+    <!--  <bean id="breakoutStagingJob" class="org.springframework.scheduling.quartz.MethodInvokingJobDetailFactoryBean">
+          <property name="targetObject" ref="stagingService"/>
+          <property name="targetMethod" value="loadStagedDatasets"/>
+      </bean>    -->
+
+
+    <bean name="breakoutStagingJob"
+          class="org.springframework.scheduling.quartz.JobDetailFactoryBean">
+        <property name="jobClass" value="com.jaspersoft.ji.adhoc.strategy.staging.StagingJob" />
+        <property name="jobDataAsMap">
+            <map>
+                <entry key="stagingService" value-ref="stagingService"/>
+            </map>
+        </property>
+        <property name="durability" value="true"/>
+    </bean>
+
+    <!-- wrapping data strategy which unrolls DimensionDataSet -->
+    <bean id="uddsStrategy" class="com.jaspersoft.ji.adhoc.strategy.UnrolledDimensionDataSetStrategy" scope="prototype"/>
+
+    <!-- wrapping data strategy which flattens WorkingDataSet -->
+    <bean id="flattenStrategy" class="com.jaspersoft.ji.adhoc.strategy.FlattenedWorkingDataSetStrategy" scope="prototype"/>
+
+    <!-- TODO this is somewhat obsolete with HybridCalculation; about the only thing that's used is DistinctCount -->
+    <util:list id="aggregateConfigs">
+        <bean class="com.jaspersoft.ji.adhoc.strategy.AggregateConfig">
+            <property name="name" value="Count"/>
+            <property name="functionName" value="count"/>
+            <property name="calcMethod" value="sql"/>
+        </bean>
+        <bean class="com.jaspersoft.ji.adhoc.strategy.AggregateConfig">
+            <property name="name" value="Sum"/>
+            <property name="functionName" value="sum"/>
+            <property name="calcMethod" value="sql"/>
+            <property name="validSuperTypes" value="int dec"/>
+        </bean>
+        <bean class="com.jaspersoft.ji.adhoc.strategy.AggregateConfig">
+            <property name="name" value="Lowest"/>
+            <property name="functionName" value="min"/>
+            <property name="calcMethod" value="sql"/>
+            <property name="validSuperTypes" value="int dec date"/>
+        </bean>
+        <bean class="com.jaspersoft.ji.adhoc.strategy.AggregateConfig">
+            <property name="name" value="Highest"/>
+            <property name="functionName" value="max"/>
+            <property name="calcMethod" value="sql"/>
+            <property name="validSuperTypes" value="int dec date"/>
+        </bean>
+        <bean class="com.jaspersoft.ji.adhoc.strategy.AggregateConfig">
+            <property name="name" value="Average"/>
+            <property name="functionName" value="avg"/>
+            <property name="calcMethod" value="sql"/>
+            <property name="validSuperTypes" value="int dec"/>
+        </bean>
+        <bean class="com.jaspersoft.ji.adhoc.strategy.AggregateConfig">
+            <property name="name" value="CountDistinct"/>
+            <property name="functionName" value="CountDistinct"/>
+            <!-- distinct count not currently mapped directly to sql func -->
+            <property name="calcMethod" value="sqlUnionAll"/>
+        </bean>
+    </util:list>
+
+    <!--
+        data strategy beans to run queries
+      -->
+    <!-- base data strategy with common params -->
+    <bean id="baseDataStrategy" abstract="true" scope="prototype">
+        <property name="adhocEngine" ref="adhocEngineService"/>
+        <property name="formatterFactory" ref="categorizationFormatFactory"/>
+        <property name="auditContext" ref="${bean.auditContext}"/>
+        <property name="adhocConfiguration" ref="adhocConfiguration"/>
+        <property name="adHocFormattingService" ref="adHocFormattingService"/>
+        <property name="properties">
+            <map>
+                <!-- if you are creating a default "is one of (all values)" filter,
+                     and the filter values are greater than this number, create an
+                     "is not one of ()" filter (empty list) -->
+                <entry key="maxValuesForDefaultFilter" value="100"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- this is a parent class of domainDataStrategy and sqlQueryDataStrategy; both produce domain queries -->
+    <bean id="commonDomainDataStrategy" class="com.jaspersoft.ji.adhoc.strategy.CommonDomainDataStrategy" abstract="true" parent="baseDataStrategy" scope="prototype">
+        <property name="aggregateConfigs" ref="aggregateConfigs"/>
+        <!--
+              These properties apply to domainDataStrategy and (for dynamic filters) sqlQueryDataStrategy.
+              They determine whether different types of filters should be applied by modifying the generated
+              SQL or by filtering results in memory.
+            -->
+        <property name="applyQueryFilterInMemory" value="false"/>
+        <property name="applySecurityFilterInMemory" value="false"/>
+        <property name="applyDynamicFilterInMemory" value="false"/>
+        <property name="configuration" ref="slConfig"/>
+
+        <property name="profileAttributesResolver" ref="profileAttributesResolver"/>
+        <property name="repository" ref="${bean.repositoryService}"/>
+
+        <property name="adhocDiagnosticSnapshotsService" ref="adhocDiagnosticSnapshotsService"/>
+    </bean>
+
+    <!-- this strategy works on domains -->
+    <bean id="domainDataStrategy"
+          class="com.jaspersoft.ji.adhoc.strategy.DomainDataStrategy"
+          parent="commonDomainDataStrategy"
+          scope="prototype">
+    </bean>
+    <!-- this strategy works on domains with a staged domain topic -->
+    <bean id="stagedDomainDataStrategy"
+          class="com.jaspersoft.ji.adhoc.strategy.DomainQueryDataStrategy"
+          parent="commonDomainDataStrategy"
+          scope="prototype">
+    </bean>
+
+    <!-- this is just like domainDataStrategy but it loads everything into memory up front like classic -->
+    <bean id="classicDomainDataStrategy"
+          parent="domainDataStrategy"
+          scope="prototype">
+        <property name="loadEntireDatasetToMemory" value="true"/>
+    </bean>
+
+    <!-- this strategy can take a sql query and turn it into a jdbcQuery -->
+    <bean id="sqlQueryDataStrategy"
+          class="com.jaspersoft.ji.adhoc.strategy.SQLQueryDataStrategy"
+          parent="commonDomainDataStrategy"
+          scope="prototype">
+        <!-- need to get to the slFactory because you don't have a schema -->
+        <property name="semanticLayerFactory" ref="semanticLayerFactory"/>
+    </bean>
+
+    <!-- this strategy is like classic data strategy but creates a memory dataset wrapping the topic query -->
+    <bean id="newClassicDataStrategy"
+          class="com.jaspersoft.ji.adhoc.strategy.NewClassicDataStrategy"
+          parent="commonDomainDataStrategy"
+          scope="prototype">
+        <!-- need to get to the slFactory because you don't have a schema -->
+        <property name="semanticLayerFactory" ref="semanticLayerFactory"/>
+        <property name="adhocDiagnosticSnapshotsService" ref="adhocDiagnosticSnapshotsService"/>
+    </bean>
+
+    <bean id="immediateDataStrategy"
+          class="com.jaspersoft.ji.adhoc.strategy.ImmediateDataStrategy"
+          parent="newClassicDataStrategy"
+          scope="prototype">
+    </bean>
+    <!-- 3.5 ad hoc reports will have classicDataStrategy as the bean name, which should be mapped to newClassicDataStrategy...this is a clone -->
+    <bean id="classicDataStrategy" parent="newClassicDataStrategy" scope="prototype"/>
+
+    <!--  data strategy for MDX integration -->
+    <bean id="mdxDataStrategy" class="com.jaspersoft.ji.adhoc.strategy.MDXDataStrategy" parent="baseDataStrategy" scope="prototype">
+        <property name="semanticLayerFactory" ref="semanticLayerFactory"/>
+        <property name="expressionEvaluator" ref="mdxExpressionEvaluator"/>
+        <!-- maximum values to have on a filter value list -->
+        <property name="adhocConfiguration" ref="adhocConfiguration"/>
+        <property name="olapFiltersCache" ref="olapFiltersCache"/>
+        <property name="enableCaching" value="true"/>
+        <property name="axisTransformerFactory" ref="axisTransformerFactory"/>
+    </bean>
+
+    <bean id="mdxExpressionEvaluator" parent="expressionEvaluator" class="com.jaspersoft.ji.adhoc.mdx.MDXExpressionEvaluator" />
+
+    <!-- handles instantiation of AdhocMetadata (formerly AdhocData) -->
+    <bean id="adhocMetadataFactory" class="com.jaspersoft.ji.adhoc.metadata.AdhocMetadataFactory">
+        <property name="adhocEngineService" ref="adhocEngineService"/>
+        <property name="olapConnectionService" ref="olapConnectionService"/>
+		<property name="topicEscapedVariableChars" value=" .-:,"/>
+    </bean>
+
+    <!-- handles instantiation of AdhocMetadata (formerly AdhocData) -->
+
+    <!--<bean id="adhocMetadataFactory" class="com.jaspersoft.ji.adhoc.metadata.AdhocMetadataWithCheckedDependenciesFactory">-->
+        <!--<property name="factory" ref="adhocMetadataFactory"/>-->
+    <!--</bean>-->
+    <!---->
+
+    <bean id="fieldResolvingExpressionEvaluator"
+          parent="expressionEvaluator"
+          class="com.jaspersoft.commons.formula.FieldResolvingExpressionEvaluator"
+          scope="prototype"/>
+
+    <bean class="com.jaspersoft.ji.adhoc.jr.AdhocMetadataResolver">
+        <property name="adhocMetadataFactory" ref="adhocMetadataFactory"/>
+    </bean>
+
+    <!-- converter for data strategy queries -->
+    <bean id="dataStrategyQueryEasyXML" class="com.jaspersoft.commons.xml.EasyXML">
+        <!-- map from element names to class names or bean template names -->
+        <property name="elementToClassMap">
+            <map>
+                <entry key="flatQuery" value="com.jaspersoft.ji.adhoc.query.AdhocFlatQuery"/>
+                <entry key="multiLevelQuery" value="com.jaspersoft.ji.adhoc.query.AdhocMultiLevelQuery"/>
+                <entry key="allLevel" value="com.jaspersoft.ji.adhoc.query.AllLevel"/>
+                <entry key="groupLevel" value="com.jaspersoft.ji.adhoc.query.GroupsLevel"/>
+                <entry key="detailLevel" value="com.jaspersoft.ji.adhoc.query.DetailsLevel"/>
+                <entry key="group" value="com.jaspersoft.ji.adhoc.AdhocGroup"/>
+                <entry key="field" value="com.jaspersoft.commons.adhoc.AdhocField"/>
+            </map>
+        </property>
+    </bean>
+
+</beans>

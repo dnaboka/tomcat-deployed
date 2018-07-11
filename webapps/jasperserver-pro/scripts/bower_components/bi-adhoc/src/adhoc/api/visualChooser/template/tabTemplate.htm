@@ -1,0 +1,10 @@
+<li class="jr-mTab-item jr-isActive jr" data-group-name="all" style="list-style: none;">
+  <span class="jr-mTab-item-label jr">{{- this.i18n["visualization.chooser.group.all"] }}</span>
+  <span class="jr-mTab-item-icon jr"></span>
+</li>
+{{ var self = this; _.each(groups, function(type) { }}
+<li class="jr-mTab-item jr"  data-group-name="{{- type.name}}" style="list-style: none;">
+ <span class="jr-mTab-item-label jr">{{- self.i18n[type.bundleName] }}</span>
+ <span class="jr-mTab-item-icon jr"></span>
+</li>
+{{ }); }}

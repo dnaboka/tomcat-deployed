@@ -1,0 +1,1 @@
+define([],function(){"use strict";return{openInTab:function(n){var o=window.open();o.opener=null,o.document.location=n},open:function(n){location.href=n}}});

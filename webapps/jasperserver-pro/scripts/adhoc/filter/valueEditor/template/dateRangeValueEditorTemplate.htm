@@ -1,0 +1,21 @@
+<fieldset class="values between">
+    <label class="control picker" title="{{- i18n.ADH_DYNAMIC_FILTER_RELATIVE_DATE_TOOLTIP }}">
+        <input class="" name="value1" type="text" value="{{-value[0]}}">
+        <span data-validation-field="value__1" class="message warning"></span>
+    </label>
+    <div class="compare">{{- i18n.ADH_DYNAMIC_FILTER_AND }}</div>
+    <label class="control picker" title="{{- i18n.ADH_DYNAMIC_FILTER_RELATIVE_DATE_TOOLTIP }}">
+        <input class="" name="value2" type="text" value="{{-value[1]}}">
+        <span data-validation-field="value__2" class="message warning"></span>
+    </label>
+    <span data-validation-field="value" class="message warning"></span>
+</fieldset>
+
+<fieldset class="all {{- operatorName != 'betweenDates' ? 'hidden' : ''}}">
+    <div class="control checkBox">
+        <label class="wrap" title="{{- i18n.ADH_1216_DYNAMIC_FILTER_RESET_ALL }}">
+            {{- i18n.ADH_1202_DYNAMIC_FILTER_ALL_OPTION }}
+        </label>
+        <input type="checkbox" value="All" {{- isAnyValue ? 'checked="checked"' : ''}} />
+    </div>
+</fieldset>

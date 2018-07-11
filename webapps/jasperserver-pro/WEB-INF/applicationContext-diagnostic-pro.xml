@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd"
+       default-lazy-init="true">
+
+    <bean id="diagnosticSettingsPro" class="com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticSettingsCe">
+        <property name="diagnosticServices">
+            <set merge="true">
+                <ref bean="adhocEngineService"/>
+            </set>
+        </property>
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+                <!--<value>AdhocSettings</value>-->
+                <!--<value>OlapSettings</value>-->
+            </set>
+        </property>
+    </bean>
+
+    <bean id="diagnosticUsersPro" class=" com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticUsersCe">
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+            </set>
+        </property>
+    </bean>
+
+    <bean id="diagnosticHibernatePro" class="com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticHibernateCe">
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+            </set>
+        </property>
+    </bean>
+
+
+    <bean id="diagnosticReportsPro" class=" com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticReportsCe">
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+            </set>
+        </property>
+    </bean>
+    <bean id="diagnosticSchedulerPro" class=" com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticSchedulerCe">
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+            </set>
+        </property>
+    </bean>
+
+    <bean id="diagnosticRepositoryPro" class="com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticRepositoryCe">
+        <property name="diagnosticServices">
+            <set merge="true">
+                <ref bean="tenantService"/>
+            </set>
+        </property>
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+                <!--
+                <value>TotalDashboardsCount</value>
+                <value>TotalAdhocViewsCount</value>
+                <value>TotalDomainsCount</value>
+                <value>TotalOrganizationsCount</value>
+                -->
+            </set>
+        </property>
+    </bean>
+    <bean id="diagnosticRepositoryDatabaseInfoPro" class="com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticRepositoryDatabaseInfoCe">
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+            </set>
+        </property>
+    </bean>
+    <bean id="diagnosticEhCachePro" class="com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticEhCacheCe">
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+            </set>
+        </property>
+    </bean>
+
+    <bean id="diagnosticExternalInfoPro" class="com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticExternalInfoCe">
+        <property name="diagnosticServices">
+            <set merge="true">
+
+            </set>
+        </property>
+
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+
+            </set>
+        </property>
+    </bean>
+
+    <bean id="licenseManagerWrapper" class="com.jaspersoft.ji.license.LicenseDiagnosticWrapper">
+        <property name="licenseReportCounter" ref="licenseReportCounter" />
+    </bean>
+
+    <bean id="diagnosticJSAboutPro" class="com.jaspersoft.jasperserver.api.logging.diagnostic.jmx.DiagnosticDynamicMBean" parent="diagnosticJSAboutCe">
+        <property name="diagnosticServices">
+            <set merge="true">
+                <ref bean="licenseManagerWrapper"/>
+                <ref bean="${bean.instanceProductTypeResolver}"/>
+            </set>
+        </property>
+        <property name="excludedDiagnosticAttributes">
+            <set merge="true">
+                <!--
+                <value>IsLicenseValid</value>
+                <value>SupportedFeatures</value>
+                <value>LicenseExpirationDate</value>
+                <value>ProductEditionName</value>
+                <value>LicenseType</value>
+                <value>LicenseUsersCount</value>
+                <value>LicenseCpusCount</value>
+                <value>LicenseCoresCount</value>
+                <value>LicenseEnvironmentType</value>
+                <value>LicenseUserCountExceeded</value>
+                <value>LicenseAboutToExpire</value>
+                -->
+            </set>
+        </property>
+    </bean>
+
+    <bean id="AdHocEhCacheMBeanRegistration" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean" lazy-init="false">
+        <property name="staticMethod" value="net.sf.ehcache.management.ManagementService.registerMBeans"/>
+        <property name="arguments">
+            <list>
+                <ref bean="adhocCacheManager"/>
+                <ref bean="jasperJMXServer"/>
+                <value>false</value>
+                <value>false</value>
+                <value>true</value>
+                <value>true</value>
+            </list>
+        </property>
+    </bean>
+
+    <util:list id="diagnosticAllowedRolesPro">
+        <value>ROLE_SUPERUSER</value>
+    </util:list>
+
+</beans>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
+
+	<bean id="reportOptionsService" class="com.jaspersoft.jasperserver.multipleTenancy.MTReportOptionsFacade">
+		<property name="repository" ref="${bean.repositoryService}"/>
+		<property name="securityContextProvider" ref="${bean.securityContextProvider}"/>
+        <property name="permissionService" ref="objectPermissionService"/>
+        <property name="pathTransformer" ref="repositoryPathTransformer"/>
+	</bean>
+
+	<bean id="reportOptionsInternalService" parent="reportOptionsService">
+		<property name="repository" ref="${bean.internalRepositoryService}"/>
+	</bean>
+
+    <bean id="reportOptionsUnsecureService" parent="reportOptionsService">
+        <property name="repository" ref="unsecureRepositoryService"/>
+    </bean>
+
+    <bean id="reportOptionsValuesFilter" class="com.jaspersoft.ji.report.options.metadata.ReportOptionsValuesFilterImpl">
+        <property name="saveReadOnlyControlValues" value="false"/>
+        <property name="saveHiddenControlValues" value="false"/>
+    </bean>
+
+    <bean id="reportUnitDeleteListener" class="com.jaspersoft.ji.report.options.metadata.hibernate.ReportUnitDeleteListener"/>
+    
+    <bean id="reportOptionsUniqueLabelListener" class="com.jaspersoft.ji.report.options.metadata.hibernate.ReportOptionsUniqueLabelListener">
+        <property name="optionsServiceName"><idref bean="reportOptionsUnsecureService"/></property>
+    </bean>
+
+    <bean id="proHibernateCompositeInterceptorListeners" parent="hibernateCompositeInterceptorListeners" class="java.util.ArrayList">
+        <constructor-arg index="0" type="java.util.Collection">
+            <list merge="true">
+                <ref bean="reportOptionsUniqueLabelListener"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="reportOptionsJobsPersistenceHibernateService" class="com.jaspersoft.ji.report.options.engine.HibernateReportOptionsJobsPersistenceService"
+		parent="reportJobsPersistenceHibernateService">
+		<property name="optionsService" ref="reportOptionsInternalService"/>
+	</bean>
+
+    <bean id="reportJobMutlitenantPermissionGrantingStrategy" class="com.jaspersoft.jasperserver.multipleTenancy.security.ReportJobMutlitenantPermissionGrantingStrategy">
+        <property name="tenantSecurityProvider" ref="tenantSecurityProvider"/>
+        <property name="sidRetrievalStrategy" ref="sidRetrievalStrategy"/>
+
+    </bean>
+    <bean id="reportJobProVirtualAclService" class="com.jaspersoft.jasperserver.api.engine.scheduling.security.ReportJobVirtualAclServiceImpl" parent="reportJobVirtualAclService">
+        <property name="permissionGrantingStrategy" ref="reportJobMutlitenantPermissionGrantingStrategy"/>
+    </bean>
+
+    <bean id="reportOptionsJobSecurity" class="org.springframework.security.access.intercept.aopalliance.MethodSecurityInterceptor"
+			parent="reportJobSecurity">
+		<property name="securityMetadataSource">
+            <security:method-security-metadata-source>
+                <security:protect method="com.jaspersoft.jasperserver.api.engine.scheduling.service.ReportJobsPersistenceService.listJobs" access="AFTER_ACL_COLLECTION_READ"/>
+                <security:protect method="com.jaspersoft.ji.report.options.engine.ReportOptionsJobPersistenceService.listOptionsJobs" access="AFTER_ACL_COLLECTION_READ"/>
+                <security:protect method="com.jaspersoft.ji.report.options.engine.ReportOptionsJobPersistenceService.listReportAndOptionsJobs" access="AFTER_ACL_COLLECTION_READ"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.engine.scheduling.service.ReportJobsPersistenceService.loadJob" access="ACL_REPORT_JOB_READ"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.engine.scheduling.service.ReportJobsPersistenceService.updateJob" access="ACL_REPORT_JOB_UPDATE"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.engine.scheduling.service.ReportJobsPersistenceService.deleteJob" access="ACL_REPORT_JOB_DELETE"/>
+            </security:method-security-metadata-source>
+		</property>
+	</bean>
+	<bean id="reportOptionsJobsPersistenceService" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interceptorNames">
+			<list>
+				<idref bean="reportOptionsJobSecurity"/>
+				<idref bean="reportOptionsJobsPersistenceHibernateService"/>
+			</list>
+		</property>
+	</bean>
+
+    <alias name="reportOptionsJobsPersistenceHibernateService" alias="unsecureReportOptionsJobsPersistenceService"/>
+
+	<bean id="reportOptionsSchedulingService" class="com.jaspersoft.ji.report.options.engine.ReportOptionsSchedulingFacade" parent="reportSchedulingService">
+		<property name="persistenceService" ref="mtJobPersistenceService"/>
+		<property name="jobsInternalService" ref="reportOptionsJobsPersistenceService"/>
+		<property name="validator" ref="proReportJobValidator"/>
+	</bean>
+	
+	<bean id="schedulingReportOptionsDeleteListener" class="com.jaspersoft.ji.report.options.engine.SchedulingReportOptionsDeleteListener">
+		<property name="schedulingService" ref="reportOptionsSchedulingService"/>
+	</bean>
+
+	<bean id="proReportJobValidator" class="com.jaspersoft.ji.remote.dashboard.ProReportJobValidator" parent="defaultReportJobValidator">
+		<property name="reportOptionsService" ref="reportOptionsService"/>
+	</bean>
+
+	<bean id="reportOptionsRepositoryListener" class="com.jaspersoft.ji.report.options.engine.ReportUnitRepositoryListener">
+		<property name="optionsService" ref="reportOptionsInternalService"/>
+	</bean>
+
+    <bean id="proHibernateRepositoryListeners" class="java.util.ArrayList">
+        <constructor-arg index="0" type="java.util.Collection">
+            <list>
+                <ref bean="schedulingReportDeleteListener"/>
+                <ref bean="objectPermissionsRepositoryListener"/>
+                <ref bean="engineCacheDeleteListener"/>
+                <ref bean="dataSnapshotReportUnitCopyListener"/>
+                <ref bean="schedulingReportOptionsDeleteListener"/>
+                <ref bean="reportOptionsRepositoryListener"/>
+                <ref bean="mondrianXMLADefinitionListener"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <!-- Hibernate config files -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="addHibernateConfig"/>
+        <property name="value">
+            <list>
+                <value>/com/jaspersoft/ji/report/options/hibernate/ReportOptions.hbm.xml</value>
+            </list>
+        </property>
+        <property name="valueType" value="stringList"/>
+    </bean>
+
+    <!-- client class mapping -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="mapClientClass"/>
+        <property name="value">
+            <map>
+                <entry key="com.jaspersoft.ji.report.options.metadata.ReportOptions"
+                        value="com.jaspersoft.ji.report.options.metadata.ReportOptionsImpl"/>
+            </map>
+        </property>
+        <property name="valueType" value="stringMap"/>
+    </bean>
+
+    <!-- repo class mapping -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="mapRepoClass"/>
+        <property name="value">
+            <map>
+                <entry key="com.jaspersoft.ji.report.options.metadata.ReportOptions"
+                    value="com.jaspersoft.ji.report.options.metadata.hibernate.RepoReportOptions"/>
+            </map>
+        </property>
+        <property name="valueType" value="stringMap"/>
+    </bean>
+
+	<bean id="reportUnitSaveService" class="com.jaspersoft.jasperserver.jive.pro.StandardReportSaveService">
+		<property name="repository" ref="${bean.repositoryService}"/>
+		<property name="dataSnapshotService" ref="dataSnapshotService"/>
+		<property name="dataCacheProvider" ref="engineServiceDataCacheProvider"/>
+	</bean>
+
+</beans>

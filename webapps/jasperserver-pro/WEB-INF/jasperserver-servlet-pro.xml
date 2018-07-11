@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+       http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd">
+
+
+    <mvc:view-controller path="/domaindesigner.html" view-name="modules/semanticLayer/domainDesigner_v2/startDomainDesigner"/>
+
+    <bean id="proHomePageByRole" class="java.util.ArrayList">
+        <constructor-arg index="0" type="java.util.Collection">
+            <list>
+                <value>ROLE_ADMINISTRATOR|redirect:/flow.html?_flowId=homeFlow</value>
+                <value>ROLE_USER|redirect:/flow.html?_flowId=homeFlow</value>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <util:map id="convertersMap">
+        <entry key="adhocTable">
+            <bean class="com.jaspersoft.ji.adhoc.converter.AdhocTableToJsonStreamingConverter" />
+        </entry>
+        <entry key="adhocCrosstab">
+            <bean class="com.jaspersoft.ji.adhoc.converter.AdhocCrosstabToJsonStreamingConverter" />
+        </entry>
+        <entry key="adhocChart">
+            <bean class="com.jaspersoft.ji.adhoc.converter.AdhocChartToJsonStreamingConverter" />
+        </entry>
+        <entry key="adhocIntelligentChart">
+            <bean class="com.jaspersoft.ji.adhoc.converter.AdhocIntelligentChartToJsonStreamingConverter" />
+        </entry>
+        <entry key="adHocCalcFields">
+            <bean class="com.jaspersoft.ji.adhoc.converter.AdhocCalcFieldsStreamingConverter"/>
+        </entry>
+    </util:map>
+
+    <bean id="jsonViewResolver" class="com.jaspersoft.ji.adhoc.JsonViewResolver">
+        <property name="jsonView">
+            <bean class="com.jaspersoft.ji.adhoc.JsonView" />
+        </property>
+        <property name="convertersMap" ref="convertersMap"/>
+        <property name="cache" value="false" />
+        <property name="order" value="20"/>
+    </bean>
+
+    <util:map id="templateProperties" scope="singleton">
+        <entry key="templatesFolderUri" value="#{reportGeneratorDefaultConf.templatesFolderUri}"/>
+        <entry key="defaultTemplateUri" value="#{reportGeneratorDefaultConf.defaultTemplateUri}"/>
+        <entry key="publicFolderUri" value="#{reportGeneratorDefaultConf.publicFolderUri}"/>
+    </util:map>
+
+    <bean id="dashboardController" class="com.jaspersoft.ji.war.control.DashboardController"/>
+
+</beans>
+

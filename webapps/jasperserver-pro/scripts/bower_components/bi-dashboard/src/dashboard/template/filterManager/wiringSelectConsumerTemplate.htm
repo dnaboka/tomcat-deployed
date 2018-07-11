@@ -1,0 +1,11 @@
+<tr class="consumerRow">
+    <td class="dashletColumn" data-bind="validationErrorClass:id">
+        <select name="id" data-bind="value:id"></select>
+        <span class="message warning" data-bind="validationErrorText:id"></span>
+    </td>
+    <td class="parameterColumn" data-bind="validationErrorClass:parameter">
+        <select name="parameter" data-bind="value:parameter, toggle:parameter, attr:{title:prependText(parameter, '{{- i18n['tooltip.parameter'] }}')}"></select>
+        <select name="parameter" data-bind="value:parameter, toggle:not(parameter)" title="{{- i18n['dashboard.filter.manager.select.parameter'] }}"></select>
+        <span class="message warning" data-bind="validationErrorText:parameter"></span>
+    </td>
+</tr>

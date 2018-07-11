@@ -1,0 +1,12 @@
+<div class="section">
+    <label class="control dashletNameProperty" data-bind="validationErrorClass:name">
+        <span class="wrap title">{{-i18n["dashboard.base.dialog.properties.dashlet.name"]}}</span>
+        <input name="name" type="text" data-bind="value:name" />
+        <span class="message warning" data-bind="validationErrorText:name"></span>
+    </label>
+
+    <label class="control resourceIdProperty">
+        <span class="wrap title">{{-i18n["dashboard.base.dialog.properties.dashlet.id"]}}</span>
+        <span class="wrap resource" data-bind="text:id"></span>
+    </label>
+</div>

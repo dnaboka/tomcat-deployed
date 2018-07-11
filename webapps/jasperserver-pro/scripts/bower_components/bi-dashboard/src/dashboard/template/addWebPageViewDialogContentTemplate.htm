@@ -1,0 +1,5 @@
+<label title="{{- i18n['dashboard.dialog.web.page.view.url'] }}" class="control input text" data-bind="validationErrorClass:url">
+    <span class="wrap">{{- i18n['dashboard.dialog.web.page.view.url'] }}</span>
+    <input name="url" data-bind="value:url, events:['input']" type="text" data-jrs-parameterized-input/>
+    <span class="message warning" data-bind="validationErrorText:url"></span>
+</label>

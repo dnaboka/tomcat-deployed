@@ -1,0 +1,1 @@
+define(["require","!domReady","domain.chooser.fields","jrs.configs","underscore"],function(e){"use strict";var o=e("!domReady"),s=e("domain.chooser.fields"),n=e("jrs.configs"),d=e("underscore");o(function(){d.extend(s._messages,n.dataChooser.domain._messages),d.extend(window.localContext,n.dataChooser.localContext),s.chooser.initialize()})});

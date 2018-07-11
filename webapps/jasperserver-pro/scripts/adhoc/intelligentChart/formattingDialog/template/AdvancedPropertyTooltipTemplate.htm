@@ -1,0 +1,5 @@
+{{ if (options.name) { }}
+<p class="message">{{- model.name }}</p>
+{{ } else if (options.value) { }}
+<p class="message">{{- model.value }}</p>
+{{ } }}

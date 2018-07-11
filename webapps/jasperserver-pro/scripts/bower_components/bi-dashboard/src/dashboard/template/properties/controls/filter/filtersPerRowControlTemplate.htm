@@ -1,0 +1,11 @@
+<div class="section">
+    <label class="control filtersPerRowProperty" data-bind="validationErrorClass:filtersPerRow">
+        <span class="wrap">{{-i18n["dashboard.component.dialog.properties.filters.per.row"]}}</span>
+        <select name="filtersPerRow" data-bind="disabled:floating,value:integer(filtersPerRow)">
+            {{ _(options.filtersPerRow).times(function(n){ }}
+                <option value="{{- n+1 }}">{{- n+1 }}</option>
+            {{ }) }}
+        </select>
+        <span class="message warning" data-bind="validationErrorText:filtersPerRow"></span>
+    </label>
+</div>

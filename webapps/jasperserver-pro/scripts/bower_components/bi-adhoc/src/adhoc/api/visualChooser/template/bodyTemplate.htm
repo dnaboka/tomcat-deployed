@@ -1,0 +1,8 @@
+{{ var self = this; _.each(types, function(type) { }}
+<li class="jr-mVisualchooser-menu-item jr" data-chart-type="{{- type.name}}" style="list-style: none;">
+    <div class="jr-mVisualchooser-menu-item-wrapper jr">
+        <div class="jr-mVisualchooser-menu-item-icon jr-mVisualchooser-menu-item-icon{{- type.cssClass}} jr"></div>
+        <span class="jr-mVisualchooser-menu-item-label jr">{{- self.i18n[type.bundleName] }}</span>
+    </div>
+</li>
+{{ }); }}

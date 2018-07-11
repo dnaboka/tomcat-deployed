@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<remoteResourcesBundle xsi:schemaLocation="http://maven.apache.org/remote-resources/1.1.0 http://maven.apache.org/xsd/remote-resources-1.1.0.xsd"
+    xmlns="http://maven.apache.org/remote-resources/1.1.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <remoteResources>
+    <remoteResource>applicationContext-pro-web-services.xml</remoteResource>
+    <remoteResource>applicationContext-pro-rest.xml</remoteResource>
+    <remoteResource>applicationContext-license.xml</remoteResource>
+    <remoteResource>applicationContext-multiTenancy-web.xml</remoteResource>
+    <remoteResource>applicationContext-export-import-web-pro.xml</remoteResource>
+    <remoteResource>applicationContext-security-pro-web.xml</remoteResource>
+    <remoteResource>internal/jasperreports_highcharts_messages.mapping.properties</remoteResource>
+    <remoteResource>applicationContext-pro-settings.xml</remoteResource>
+  </remoteResources>
+  <sourceEncoding>UTF-8</sourceEncoding>
+</remoteResourcesBundle>

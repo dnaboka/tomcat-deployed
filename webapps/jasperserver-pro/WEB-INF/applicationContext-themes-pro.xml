@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
+    <bean id="proThemeHibernateListener" class="com.jaspersoft.ji.war.themes.MTThemeHibernateListener" parent="themeHibernateListener">
+        <property name="propagatorBeanName" value="proThemePropagator" />
+    </bean>
+
+    <bean id="proThemePropagator" class="com.jaspersoft.ji.war.themes.MTThemePropagatorImpl">
+        <property name="configurationBean" ref="configurationBean" />
+        <property name="repositoryService" ref="unsecureRepositoryService" />
+        <property name="resourceFactory" ref="mappingResourceFactory" />
+        <property name="tenantService" ref="${bean.hibernateTenantService}" />
+        <property name="themeUtils" ref="themeUtils" />
+        <property name="themeCache" ref="themeCache" />
+    </bean>
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanPropertyOverrider">
+        <property name="beanName" value="themeCache"/>
+        <property name="propertyName" value="themePreLoadListener"/>
+        <property name="overrideReference" value="proThemePropagator"/>
+    </bean>
+
+</beans>       

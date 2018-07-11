@@ -1,0 +1,1 @@
+define(["require","backbone","underscore","text!home/template/popularLinkTemplate.htm"],function(e){"use strict";var t=e("backbone"),r=e("underscore"),n=e("text!home/template/popularLinkTemplate.htm");return t.View.extend({template:n,render:function(){var e=this.model.toJSON();return this.setElement(r.template(this.template,e)),this}})});

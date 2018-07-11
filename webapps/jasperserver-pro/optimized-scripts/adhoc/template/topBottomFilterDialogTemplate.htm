@@ -1,0 +1,23 @@
+<div>
+    <div class="leaf">
+        <label class="control input text"  title="{{- model.type === 'top' ? i18n['ADH_1236_DIALOG_AMOUNT_TOP'] : i18n['ADH_1236_DIALOG_AMOUNT_BOTTOM'] }}">
+            <span class="wrap">{{- model.type === 'top' ? i18n['ADH_1236_DIALOG_AMOUNT_TOP'] : i18n['ADH_1236_DIALOG_AMOUNT_BOTTOM'] }}:</span>
+            <input class="" name="limit" type="text" value="{{- model.limit}}" />
+            <span class="message warning"></span>
+        </label>
+    </div>
+
+    <div class="leaf">
+        <label class="control input checkBox" title="{{-i18n['ADH_1236_DIALOG_AGGREGATE_UNRANKED']}}">
+            <span class="wrap">{{-i18n['ADH_1236_DIALOG_AGGREGATE_UNRANKED']}}</span>
+            <input name="aggregateUnranked" type="checkbox" {{ if (model.aggregateUnranked) { }} checked {{ } }}/>
+        </label>
+    </div>
+
+    <div class="leaf">
+        <label class="control input checkBox" title="{{-i18n['ADH_1236_DIALOG_APPLY_FOR_ALL_GROUPS']}}">
+            <span class="wrap">{{-i18n['ADH_1236_DIALOG_APPLY_FOR_ALL_GROUPS']}}</span>
+            <input name="applyAcrossGroups" type="checkbox" {{ if (model.applyAcrossGroups) { }} checked {{ } }} />
+        </label>
+    </div>
+</div>

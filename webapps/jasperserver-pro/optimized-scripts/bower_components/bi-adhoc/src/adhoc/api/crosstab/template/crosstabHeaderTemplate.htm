@@ -1,0 +1,26 @@
+    <thead class="jr-mDatatable-header jr">
+
+    {{_.each(data, function(row, y, rows) { }}
+    <tr class="jr-mDatatable-row jr {{= (rows.length - 1 === y) ? 'jr-mDatatable-rowGrouplabels' : '' }}">
+        {{_.each(row, function(cell, x) { }}
+        {{ if (cell) { }}
+        <th class="jr-mDatatable-cell jr {{= cell.isMeasure ? 'jr-mDatatable-cellMeasure' : 'jr-mDatatable-cellField'}} {{= (rows.length - 1 === y) ? 'jr-mDatatable-cellColumnlabel' : 'jr-mDatatable-cellRowlabel' }}"
+            colspan="{{=cell.colspan}}" rowspan="{{=cell.rowspan}}"
+            title="{{- cell.label }}">
+            <div class="jr-mDatatable-cell-wrapper jr">
+                <div class="jr-mDatatable-cell-text jr">
+                    {{ if (cell.isExpanded || cell.isCollapsed ) { }}
+                    <span class="jr-mDatatable-cell-expander jr-mIcon jr {{= cell.isExpanded ? 'jr-isExpanded' : ''}} {{= cell.isCollapsed ? 'jr-isCollapsed' : ''}}"
+                          {{= cell.isCollapsed && cell.expId ? 'data-expansion-id="' + cell.expId + '"' : ''}}
+                          {{= cell.isExpanded && cell.colId ? 'data-expansion-id="' + cell.colId + '"' : ''}}></span>
+                    {{ } }}
+                    {{- cell.label }}
+                </div>
+            </div>
+        </th>
+        {{ } }}
+        {{ }); }}
+    </tr>
+    {{ }); }}
+
+    </thead>

@@ -1,0 +1,1 @@
+define({LITERAL:"literal",LIST:"list",RANGE:"range",DATE_RANGE:"dateRange",READ_ONLY:"readOnly"});

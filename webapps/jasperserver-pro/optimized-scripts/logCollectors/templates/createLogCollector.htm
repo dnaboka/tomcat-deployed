@@ -1,0 +1,64 @@
+<div class="content hasFooter">
+	<div class="header">
+		<div class="title">{{- i18n["logCollectors.form.title"] }}</div>
+	</div>
+
+	<div class="body">
+		<div class="CreateLogCollector">
+			<fieldset class="group shortFields createLogCollectorForm">
+				<label class="control input text">
+					<span class="wrap">{{- i18n["logCollectors.form.collectorName"] }} ({{- i18n['required.field']}}):</span>
+					<input name="name" type="text" value="{{- name }}">
+					<span class="message hint">{{- i18n["logCollectors.form.collectorName.hint"] }}</span>
+					<span class="message warning"></span>
+				</label>
+
+				<label class="control input text userId">
+					<span class="wrap">{{- i18n["logCollectors.form.userId"] }}:</span>
+					<input name="userId" type="text" value="{{- userId }}">
+					<span class="message hint">{{- i18n["logCollectors.form.userId.hint"] }}</span>
+					<span class="message warning"></span>
+				</label>
+
+				<div class="control browser resourceUri">
+					<span class="wrap">{{- i18n["logCollectors.form.resourceUri"] }}:</span>
+					<input type="text" id="resourceUri" name="resourceUri" value="{{- resourceUri }}">
+					<button id="resourceUriBrowseButton" name="resourceUriBrowseButton" class="button action" type="button">
+						<span class="wrap">
+							{{- i18n["form.browse"] }}
+							<span class="icon"></span>
+						</span>
+					</button>
+					<span class="message hint">{{- i18n["logCollectors.form.resourceUri.hint"] }}</span>
+					<span class="message warning"></span>
+				</div>
+
+				<div class="control checkBox includeDataSnapshot">
+					<label class="wrap" for="__jrs__includeDataSnapshot">{{- i18n["logCollectors.form.includeDataSnapshot"] }}</label>
+					<input id="__jrs__includeDataSnapshot" type="checkbox" name="includeDataSnapshot">
+				</div>
+
+				<label class="control select verbosity">
+					<span class="wrap">{{- i18n["logCollectors.form.verbosityLevel"] }}:</span>
+					<select name="verbosity">
+						<option value="low">{{- i18n["logCollectors.form.low"] }}</option>
+						<option value="medium">{{- i18n["logCollectors.form.medium"] }}</option>
+						<option value="high">{{- i18n["logCollectors.form.high"] }}</option>
+					</select>
+					<span class="message warning"></span>
+				</label>
+			</fieldset>
+		</div>
+	</div>
+
+	<div class="footer">
+		<fieldset>
+			<button class="button primary action up" name="save">
+				<span class="wrap">{{- i18n["form.edit.save"] }}</span><span class="icon"></span>
+			</button>
+			<button class="button action up" name="cancel">
+				<span class="wrap">{{- i18n["form.edit.cancel"] }}</span><span class="icon"></span>
+			</button>
+		</fieldset>
+	</div>
+</div>

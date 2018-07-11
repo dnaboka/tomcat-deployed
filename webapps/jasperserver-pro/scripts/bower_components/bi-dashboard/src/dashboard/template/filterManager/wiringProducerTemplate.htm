@@ -1,0 +1,25 @@
+<tr class="producerRow">
+    <td class="sourceColumn" data-bind="toggle:isFirstItemInGroup, attr:{rowspan:itemsInGroup}, text:group"></td>
+    <td class="filterColumn" data-bind="validationErrorClass:name, classes:{invisible:isHidden}, attr:{title:prependText(parameterPublicName, '{{- i18n['tooltip.parameter'] }}')}">
+        <input maxlength="255" data-bind="value:name, toggle:not(id), events:['keyup']" type="text"/>
+        <span data-bind="text:label, toggle:id"></span>
+        <span class="message warning" data-bind="validationErrorText:name"></span>
+    </td>
+    <td class="selectConsumerColumn" colspan="2">
+        <table class='consumerTable'>
+            <tbody>
+            </tbody>
+        </table>
+    </td>
+    <td class="addConsumerColumn">
+        <button data-bind="toggle:id" class="button action simple add"></button>
+    </td>
+    <td class="removeConsumerColumn">
+        <button class="button action simple delete"></button>
+
+        <table class='consumerTable'>
+            <tbody>
+            </tbody>
+        </table>
+    </td>
+</tr>

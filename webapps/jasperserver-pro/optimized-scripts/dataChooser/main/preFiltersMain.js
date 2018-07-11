@@ -1,0 +1,1 @@
+define(["require","!domReady","domain.chooser.filters","jrs.configs","underscore","dateFormatter"],function(e){"use strict";var o=e("!domReady"),r=e("domain.chooser.filters"),s=e("jrs.configs"),t=e("underscore");e("dateFormatter"),o(function(){t.extend(r._messages,s.dataChooser.domain._messages),t.extend(window.localContext,s.dataChooser.localContext),r.chooser.initialize()})});

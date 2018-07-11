@@ -1,0 +1,36 @@
+{
+  "type": "object",
+  "properties": {
+    "params": {
+      "type": "object",
+      "description": "Ad Hoc View's dataset pagination parameters",
+      "properties": {
+        "offset": {
+          "description": "Array of offsets of the axes",
+          "type": "array",
+          "maxItems": 2,
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false
+          }
+        },
+        "pageSize": {
+          "description": "Array of page sizes of the axes",
+          "type": "array",
+          "maxItems": 2,
+          "minItems": 1,
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": false
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "params"
+  ]
+}

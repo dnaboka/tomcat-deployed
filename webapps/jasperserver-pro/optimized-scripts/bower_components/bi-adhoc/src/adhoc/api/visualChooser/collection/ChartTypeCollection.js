@@ -1,0 +1,1 @@
+define(["require","exports","module","underscore","backbone","../model/ChartTypeModel","logger"],function(e,o,r){"use strict";var n=(e("underscore"),e("backbone")),t=e("../model/ChartTypeModel");e("logger").register(r);return n.Collection.extend({model:t,initialize:function(){}})});

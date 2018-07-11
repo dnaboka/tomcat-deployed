@@ -1,0 +1,1 @@
+define(["require","underscore","backbone"],function(e){"use strict";var n=(e("underscore"),e("backbone"));return n.Collection.extend({findComponentDeep:function(e){var n=this.filter({componentType:e}),o=this.reduce(function(n,o){return n.concat(o.components.findComponentDeep(e))},[]);return n.concat(o)}})});

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+       	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+    <bean id="settingsGroupsPRO" class="java.util.HashMap" parent="settingsGroupsCE">
+        <constructor-arg index="0" type="java.util.Map">
+            <map merge="true">
+                <entry key="adhocFilterSettings" value-ref="adhocFilterSettings"/>
+                <entry key="dashboardSettings" value-ref="dashboardSettings"/>
+                <entry key="domainSettings" value-ref="domainSettings"/>
+            </map>
+        </constructor-arg>
+    </bean>
+
+    <util:map id="domainSettings">
+        <entry key="defaultJoinWeight">
+            <util:constant static-field="com.jaspersoft.commons.datarator.Join.DEFAULT_WEIGHT"/>
+        </entry>
+        <entry key="schemaElementNameNotSupportedSymbols">
+            <util:constant static-field="com.jaspersoft.commons.semantic.validate.impl.DomainValidatorImpl.NAME_NOT_SUPPORTED_SYMBOLS"/>
+        </entry>
+    </util:map>
+
+    <util:map id="adhocFilterSettings">
+        <entry key="availableItemsPageSize">
+            <value>999</value>
+        </entry>
+        <entry key="availableItemsPageSizeOlap">
+            <value>999</value>
+        </entry>
+        <entry key="nullValue">
+            <util:constant static-field="com.jaspersoft.jasperserver.war.cascade.handlers.InputControlHandler.NULL_SUBSTITUTION_VALUE"/>
+        </entry>
+        <entry key="nullLabel">
+            <util:constant static-field="com.jaspersoft.jasperserver.war.cascade.handlers.InputControlHandler.NULL_SUBSTITUTION_LABEL"/>
+        </entry>
+    </util:map>
+
+    <util:map id="dashboardSettings">
+        <entry key="newItemsRegistry">
+            <util:list>
+                <util:map>
+                    <entry key="id" value="chart"/>
+                    <entry key="label" value="dashboard.sidebar.new.content.chart.label"/>
+                    <entry key="description" value="dashboard.sidebar.new.content.chart.description"/>
+                </util:map>
+
+                <util:map>
+                    <entry key="id" value="crosstab"/>
+                    <entry key="label" value="dashboard.sidebar.new.content.crosstab.label"/>
+                    <entry key="description" value="dashboard.sidebar.new.content.crosstab.description"/>
+                </util:map>
+
+                <util:map>
+                    <entry key="id" value="table"/>
+                    <entry key="label" value="dashboard.sidebar.new.content.table.label"/>
+                    <entry key="description" value="dashboard.sidebar.new.content.table.description"/>
+                </util:map>
+
+                <util:map>
+                    <entry key="id" value="text"/>
+                    <entry key="label" value="dashboard.sidebar.new.content.free.text.label"/>
+                    <entry key="description" value="dashboard.sidebar.new.content.free.text.description"/>
+                </util:map>
+
+                <util:map>
+                    <entry key="id" value="webPageView"/>
+                    <entry key="label" value="dashboard.sidebar.new.content.web.page.view.label"/>
+                    <entry key="description" value="dashboard.sidebar.new.content.web.page.view.description"/>
+                </util:map>
+                <util:map>
+                    <entry key="id" value="image"/>
+                    <entry key="label" value="dashboard.sidebar.new.content.image.label"/>
+                    <entry key="description" value="dashboard.sidebar.new.content.image.description"/>
+                </util:map>
+            </util:list>
+        </entry>
+     </util:map>
+
+    <util:map id="exportResourceOptionsPro" >
+        <entry key="report">
+            <set>
+                <value>reportUnit</value>
+                <value>reportOptions</value>
+            </set>
+        </entry>
+        <entry key="adhocDataView">
+            <set>
+                <value>adhocDataView</value>
+            </set>
+        </entry>
+        <entry key="dataSource">
+            <set>
+                <value>beanDataSource</value>
+                <value>customDataSource</value>
+                <value>jdbcDataSource</value>
+                <value>jndiJdbcDataSource</value>
+                <value>virtualDataSource</value>
+                <value>mondrianConnection</value>
+                <value>xmlaConnection</value>
+                <value>awsDataSource</value>
+                <value>secureMondrianConnection</value>
+            </set>
+        </entry>
+        <entry key="dashboard">
+            <set>
+                <value>dashboard</value>
+                <value>legacyDashboard</value>
+            </set>
+        </entry>
+        <entry key="domain">
+            <set>
+                <value>semanticLayerDataSource</value>
+            </set>
+        </entry>
+        <entry key="others">
+            <set>
+                <value>domainTopic</value>
+                <value>file</value>
+                <value>folder</value>
+                <value>listOfValues</value>
+                <value>inputControl</value>
+                <value>query</value>
+                <value>olapUnit</value>
+                <value>mondrianXmlaDefinition</value>
+                <value>dataType</value>
+                <value>olapUnit</value>
+            </set>
+        </entry>
+    </util:map>
+</beans>

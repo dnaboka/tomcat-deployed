@@ -1,0 +1,34 @@
+<ul class="list inputRow">
+    <li class="node">
+        <div class="group">
+            <label title="{{- i18n.ADH_410_CALCULATION_TIP }}" class="control select">
+                <span class="wrap">{{- i18n.ADH_410_CALCULATION }}</span>
+                <select name="availableSummaries" class="availableSummaries">
+                </select>
+                <span class="message warning"> </span>
+            </label>
+        </div>
+    </li>
+
+    <li class="node">
+
+        <div class="weightedOnFieldsList group hidden">
+            <div class="control">
+                <label title="{{- i18n.ADH_410_WEIGHTED_ON_TIP }}" class="weightedOnInput control input">
+                    <span class="wrap">{{- i18n.ADH_410_WEIGHTED_ON }}</span>
+                    <input type="text" value="" disabled="disabled">
+                    <span class="message warning"> </span>
+                </label>
+            </div>
+
+            <fieldset class="control standAlone pickList">
+                <label title="{{- i18n.ADH_421_AVAILABLE_FIELDS_TIP }}" class="control availableValues">
+                    <span class="wrap">{{- i18n.ADH_421_AVAILABLE_FIELDS }}</span>
+                    <ul class="list pickList" > </ul>
+                </label>
+            </fieldset>
+        </div>
+    </li>
+</ul>
+
+<div class="customSummaryEditor hidden"> </div>

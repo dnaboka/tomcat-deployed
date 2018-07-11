@@ -1,0 +1,42 @@
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<ehcache name="adHocViewExecutorCache">
+
+	<!-- where to store cache items if disk store is enabled (it's disabled by default) 
+		ehcache.disk.store.dir is the name of a system property set by the sysProperties bean in applicationContext.xml.
+		It points to the same path as the java.io.tmpdir system property by default.
+	 -->
+    <diskStore path="${ehcache.disk.store.dir}/adHocViewExecutorCache"/>
+
+	<defaultCache maxElementsInMemory="10000" eternal="false"
+		overflowToDisk="true" timeToIdleSeconds="120" timeToLiveSeconds="120"
+		diskPersistent="false" diskExpiryThreadIntervalSeconds="120" />
+
+	<!-- cache used by ad hoc executor for caching state executions (new for Amber)
+	   For an example ehcache XML configuration with extensive documentation, go to http://ehcache.org/ehcache.xml.
+	   HTML doc is available at http://ehcache.org/documentation/user-guide/configuration
+	   
+	   Some settings relevant to the Ad Hoc View execution cache:
+	   maxBytesLocalHeap: the limit on the amount of memory used for the cache; 
+	   		if a new cache item would cause the limit to be exceeded, 
+	   		other items are evicted to bring the memory usage under the limit
+	   timeToIdleSeconds: how long a cache item will stay in the cache if it's not used
+	   timeToLiveSeconds: maximum lifetime for a cache item, no matter how much it's used
+	-->
+	<cache name="adHocViewExecutorCache"
+		maxBytesLocalHeap="300m" 
+		timeToIdleSeconds="600"
+		timeToLiveSeconds="5400"
+		diskPersistent="false"
+		statistics="true" >
+	  	<searchable>
+    		<searchAttribute name="uuid" expression="value.getUuid()"/>
+    		<searchAttribute name="adHocViewUri" expression="value.getState().getAdHocViewUri()"/>
+    		<searchAttribute name="lastAccessTime" expression="element.getLastAccessTime()"/>
+    		<searchAttribute name="creationTime" expression="element.getCreationTime()"/>
+    		<searchAttribute name="hitCount" expression="element.getHitCount()"/>
+  		</searchable>
+	</cache>
+</ehcache>

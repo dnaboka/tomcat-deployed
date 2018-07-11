@@ -1,0 +1,1 @@
+define([],function(){return{BYTE:"byte",SHORT:"short",INTEGER:"integer",BIG_INTEGER:"bigInteger",LONG:"long",DOUBLE:"double",FLOAT:"float",DECIMAL:"decimal",BIG_DECIMAL:"bigDecimal",DATE:"date",TIME:"time",TIMESTAMP:"timestamp",STRING:"string",BOOLEAN:"boolean"}});

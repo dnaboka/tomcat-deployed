@@ -1,0 +1,75 @@
+<div class="content hasFooter ">
+
+    <div class="header mover">
+        <div class="title">
+            {{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_TITLE }}
+        </div>
+    </div>
+
+    <div class="body">
+        <div class="content tabbed">
+
+            <div class="header">
+                <ul class="control tabSet reverse buttons horizontal ">
+                    <li tabid="" class="tab first selected" id="axisTab">
+                        <a class="button">
+                            <span class="wrap">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_AXIS_OPTIONS }}</span>
+                        </a>
+                    </li>
+                    <li tabid="" class="tab" id="labelsTab">
+                        <a class="button">
+                            <span class="wrap">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_LABELS_OPTIONS }}</span>
+                        </a>
+                    </li>
+                    <li tabid="" class="tab" id="dataTab">
+                        <a class="button">
+                            <span class="wrap">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_DATA_OPTIONS }}</span>
+                        </a>
+                    </li>
+                    <li tabid="" class="tab" id="advancedTab">
+                        <a class="button">
+                            <span class="wrap">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_ADVANCED }}</span>
+                        </a>
+                    </li>
+                    <!--
+                    <li tabid="" class="tab" id="rangesTab">
+                        <a class="button">
+                            <span class="wrap">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_RANGES_OPTIONS }}</span>
+                        </a>
+                    </li>-->
+                </ul>
+            </div>
+
+            <div class="body section noTitle" id="axisSection"></div>
+            <div class="body section noTitle hidden" id="labelsSection"></div>
+            <div class="body section noTitle hidden" id="dataSection"></div>
+            <div class="body section noTitle hidden" id="advancedSection"></div>
+            <!--
+            <div class="body section noTitle hidden" id="rangesSection"></div>
+            -->
+
+        </div>
+    </div>
+
+    <div class="footer ">
+        <button class="button action primary up applyButton">
+            <span class="wrap">
+                {{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_BUTTON_APPLY }}
+                <span class="icon"></span>
+            </span>
+        </button>
+        <button class="button action up okButton">
+            <span class="wrap">
+                {{- i18n.ADH_016_BUTTON_OK }}
+                <span class="icon"></span>
+            </span>
+        </button>
+        <button class="button action up cancelButton">
+            <span class="wrap">
+                {{- i18n.ADH_010_BUTTON_CANCEL }}
+                <span class="icon"></span>
+            </span>
+        </button>
+    </div>
+
+</div>

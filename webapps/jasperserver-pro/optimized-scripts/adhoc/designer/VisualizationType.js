@@ -1,0 +1,1 @@
+define({table:"table",crosstab:"crosstab",chart:"crosstab"});

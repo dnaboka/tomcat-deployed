@@ -1,0 +1,34 @@
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans
+		xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd"
+		xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+		>
+
+	<!-- designer changer manages settings read and apply from and to adhoc subsystem -->
+	<bean id="designerOptionChanger" class="com.jaspersoft.ji.adhoc.util.DesignerOptionChanger">
+		<property name="semanticLayerFactory" ref="semanticLayerFactory" />
+		<property name="dataStrategyService" ref="dataStrategyService" />
+        <property name="adhocConfiguration" ref="adhocConfiguration"/>
+	</bean>
+
+	<bean id="propertyChangersPro" class="java.util.HashMap" parent="propertyChangersCe">
+		<constructor-arg index="0" type="java.util.Map">
+			<map merge="true">
+				<entry key="adhoc" value="designerOptionChanger"/>
+				<entry key="ji" value="globalProfilingState"/>
+			</map>
+		</constructor-arg>
+	</bean>
+
+    <bean id="loggerDescriptionFilesPro" parent="loggerDescriptionFilesCe" class="java.util.ArrayList">
+        <constructor-arg index="0" type="java.util.Collection">
+            <list merge="true">
+                <value>WEB-INF/bundles/logger_descriptions_pro</value>
+            </list>
+        </constructor-arg>
+    </bean>
+
+</beans>

@@ -1,0 +1,1 @@
+define(["require","underscore","backbone"],function(e){"use strict";var n=e("underscore"),o=e("backbone"),t=function(){this.model=new o.Model};return n.extend(t.prototype,{get:function(e){return this.model.get(e)},set:function(e,n){this.model.set(e,n)},on:function(e,n){this.model.on("change:"+e,n)},off:function(e,n){this.model.off("change:"+e,n)}}),t});

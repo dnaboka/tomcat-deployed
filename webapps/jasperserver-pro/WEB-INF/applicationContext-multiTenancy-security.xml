@@ -1,0 +1,429 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+
+	http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+	http://www.springframework.org/schema/security
+       http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+
+    <context:component-scan base-package="com.jaspersoft.jasperserver.multipleTenancy.security"/>
+
+    <bean id="mtUserAuthorityService" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="interceptorNames">
+        <list>
+            <idref bean="userAuthoritySecurity"/>
+            <idref bean="mtUserAuthorityServiceTarget"/>
+        </list>
+      </property>
+    </bean>
+
+    <alias name="mtUserAuthorityServiceTarget" alias="internalUserAuthorityService"/>
+
+    <!--TODO: SSU - made profileattributeservice protected by SS-->
+    <bean id="mtUserAuthorityServiceTarget"
+        class="com.jaspersoft.jasperserver.multipleTenancy.MTUserAuthorityServiceImpl" parent="userAuthorityService">
+        <property name="sessionFactory" ref="sessionFactory"/>
+        <property name="objectMappingFactory" ref="mappingResourceFactory"/>
+        <property name="persistentClassFactory" ref="persistentMappings"/>
+        <property name="profileAttributeService" ref="profileAttributeServiceTarget"/>
+        <property name="defaultInternalRoles">
+          <list>
+            <value>ROLE_USER</value>
+          </list>
+        </property>
+        <property name="multiTenancyConfiguration"><ref bean="multiTenancyConfiguration"/></property>
+        <property name="securityProvider"><ref local="tenantSecurityProvider"/></property>
+        <property name="securityContextProvider"><ref bean="${bean.securityContextProvider}"/></property>
+        <property name="tenantPersistenceResolver"><ref bean="${bean.hibernateTenantService}"/></property>
+
+        <!--TODO deprecated per emerald SSO work -->
+        <property name="userProcessors">
+            <list>
+                <!-- For LDAP authentication -->
+                <!-- ref bean="ldapExternalUserProcessor"/-->
+                <ref bean="defaultExternalUserProcessor"/>
+            </list>
+        </property>
+
+        <property name="auditContext" ref="${bean.auditContext}"/>
+        <property name="databaseCharactersEscapeResolver" ref="databaseCharactersEscapeResolver"/>
+        <property name="usernameCaseSensitive" value="false"/>
+    </bean>
+
+    <bean id="defaultExternalUserProcessor" class="com.jaspersoft.jasperserver.multipleTenancy.DefaultExternalUserProcessor">
+        <property name="multiTenancyService"><ref bean="internalMultiTenancyService"/></property>
+        <property name="defaultOrganizationIfNotDetected" value="organization_1"/>
+        <property name="multiTenancyConfiguration"><ref bean="multiTenancyConfiguration"/></property>
+        <property name="rootOrganizationRolesMap">
+            <map>
+                <!-- Mapping customers roles to JS roles Example -->
+                <!--<entry>-->
+                <!--<key>-->
+                <!-- Сustomer role(with adding ROLE_ prefix) which need to be mapped to root JS roles -->
+                <!--<value>ROLE_ADMIN</value>-->
+                <!--</key>-->
+                <!-- root JS role customer role to be mapped to -->
+                <!--<value>ROLE_ADMINISTRATOR</value>-->
+                <!--</entry>-->
+            </map>
+        </property>
+
+        <!-- User credentials are setup in js.externalAuth.properties-->
+        <property name="externalTenantSetupUsers">
+            <list>
+                <bean class="com.jaspersoft.jasperserver.multipleTenancy.BaseAbstractExternalUserProcessor.ExternalTenantSetupUser">
+                    <property name="username" value="${new.tenant.user.name.1}"/>
+                    <property name="fullName" value="${new.tenant.user.fullname.1}"/>
+                    <property name="password" value="${new.tenant.user.password.1}"/>
+                    <property name="emailAddress" value="${new.tenant.user.email.1}"/>
+                    <property name="roleSet">
+                        <set>
+                            <value>ROLE_ADMINISTRATOR</value>
+                            <value>ROLE_USER</value>
+                        </set>
+                    </property>
+    </bean>
+            </list>
+        </property>
+    </bean>
+
+    <!-- For LDAP authentication in JasperReport Server 4.7. In JRS > 5.1, all configuration is included in a single file (see sample's) -->
+    <!--bean id="ldapExternalUserProcessor" class="com.jaspersoft.jasperserver.multipleTenancy.ldap.LdapExternalUserProcessor">
+       <property name="ldapContextSource" ref="ldapContextSource"/>
+       <property name="multiTenancyService"><ref bean="internalMultiTenancyService"/></property>
+       <property name="excludeRootDn" value="true"/>
+       <!- - only following RDNs will matter in creating of organization hierarchy - ->
+       <property name="organizationRDNs">
+           <list>
+               <value>dc</value>
+               <value>c</value>
+               <value>o</value>
+               <value>ou</value>
+               <value>st</value>
+           </list>
+       </property>
+       <property name="rootOrganizationId" value="organization_1"/>
+       <property name="multiTenancyConfiguration"><ref bean="multiTenancyConfiguration"/></property>
+       <property name="rootOrganizationRolesMap">
+           <map>
+           </map>
+       </property>
+
+       <property name="externalTenantSetupUsers">
+            <list>
+                <bean class="com.jaspersoft.jasperserver.multipleTenancy.BaseAbstractExternalUserProcessor.ExternalTenantSetupUser">
+                    <property name="username" value="${external.tenant.user.name.1}"/>
+                    <property name="fullName" value="${external.tenant.user.fullname.1}"/>
+                    <property name="password" value="${external.tenant.user.password.1}"/>
+                    <property name="emailAddress" value="${external.tenant.user.email.1}"/>
+                    <property name="roleSet">
+                        <set>
+                            <value>ROLE_ADMINISTRATOR</value>
+                            <value>ROLE_USER</value>
+                        </set>
+                    </property>
+                </bean>
+            </list>
+        </property>
+   </bean-->
+
+	<bean id="userAuthoritySecurity"
+		class="org.springframework.security.access.intercept.aopalliance.MethodSecurityInterceptor">
+		<property name="authenticationManager" ref="authenticationManager"/>
+		<property name="accessDecisionManager" ref="userAuthorityAccessDecisionManager"/>
+		<property name="afterInvocationManager" ref="multiTenancyAfterInvocationManager"/>
+        <property name="securityMetadataSource">
+            <security:method-security-metadata-source>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getRoles"
+                        access="ROLE_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getAssignedRoles"
+                        access="ROLE_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getAvailableRoles"
+                        access="ROLE_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getTenantRoles"
+                        access="ROLE_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getTenantUsers"
+                        access="ROLE_VISIBLE,USER_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getUser"
+                        access="USER_ACCESS,ROLE_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getUsers"
+                        access="ROLE_VISIBLE,USER_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getUsersInRole"
+                        access="ROLE_ACCESS,ROLE_VISIBLE,USER_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getUsersNotInRole"
+                        access="ROLE_ACCESS,ROLE_VISIBLE,USER_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getUsersWithoutRole"
+                        access="ROLE_ACCESS:2,ROLE_VISIBLE,USER_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.getUsersWithRole"
+                        access="ROLE_ACCESS:2,ROLE_VISIBLE,USER_VISIBLE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.addRole"
+                        access="ROLE_ACCESS,USER_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.assignUsers"
+                        access="ROLE_ACCESS:2,USER_WRITE:3"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.deleteRole"
+                        access="ROLE_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.deleteUser"
+                        access="USER_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.disableUser"
+                        access="USER_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.enableUser"
+                        access="USER_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.putRole"
+                        access="ROLE_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.putUser"
+                        access="USER_WRITE,ROLE_ACCESS:2"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.removeAllRoles"
+                        access="USER_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.removeRole"
+                        access="USER_WRITE,ROLE_ACCESS"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.roleExists"
+                        access="ROLE_ACCESS"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.unassignUsers"
+                        access="ROLE_ACCESS:2,USER_WRITE:3"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.updateRole"
+                        access="ROLE_WRITE"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.updateUser"
+                        access="USER_WRITE,ROLE_ACCESS:3"/>
+                <security:protect
+                        method="com.jaspersoft.jasperserver.api.metadata.user.service.UserAuthorityService.userExists"
+                        access="USER_ACCESS"/>
+            </security:method-security-metadata-source>
+        </property>
+	</bean>
+
+	<bean id="userAuthorityAccessDecisionManager" class="org.springframework.security.access.vote.UnanimousBased">
+        <constructor-arg name="decisionVoters">
+            <list>
+                <ref local="roleAccessVoter"/>
+                <ref local="roleWriteVoter"/>
+                <ref local="userAccessVoter"/>
+                <ref local="userWriteVoter"/>
+            </list>
+        </constructor-arg>
+        <property name="allowIfAllAbstainDecisions"><value>true</value></property>
+	</bean>
+
+	<bean id="baseTenantObjectVoter"
+		class="com.jaspersoft.jasperserver.multipleTenancy.security.TenantObjectVoter"
+		abstract="true">
+		<property name="requiredRole" value="ROLE_ADMINISTRATOR"/>
+		<property name="securityProvider"><ref local="tenantSecurityProvider"/></property>
+	</bean>
+
+	<bean id="roleAccessVoter"
+		class="com.jaspersoft.jasperserver.multipleTenancy.security.RoleAccessVoter"
+		parent="baseTenantObjectVoter">
+		<property name="configAttribute" value="ROLE_ACCESS"/>
+		<property name="autoProcessedTypes">
+			<list>
+				<value>com.jaspersoft.jasperserver.api.metadata.user.domain.Role</value>
+				<value>java.lang.String</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="roleWriteVoter"
+		class="com.jaspersoft.jasperserver.multipleTenancy.security.RoleWriteVoter"
+		parent="baseTenantObjectVoter">
+		<property name="configAttribute" value="ROLE_WRITE"/>
+		<property name="autoProcessedTypes">
+			<list>
+				<value>com.jaspersoft.jasperserver.api.metadata.user.domain.Role</value>
+				<value>java.lang.String</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="userAccessVoter"
+		class="com.jaspersoft.jasperserver.multipleTenancy.security.UserAccessVoter"
+		parent="baseTenantObjectVoter">
+		<property name="configAttribute" value="USER_ACCESS"/>
+		<property name="autoProcessedTypes">
+			<list>
+				<value>com.jaspersoft.jasperserver.api.metadata.user.domain.User</value>
+				<value>java.lang.String</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="userWriteVoter"
+		class="com.jaspersoft.jasperserver.multipleTenancy.security.UserWriteVoter"
+		parent="baseTenantObjectVoter">
+		<property name="configAttribute" value="USER_WRITE"/>
+		<property name="autoProcessedTypes">
+			<list>
+				<value>com.jaspersoft.jasperserver.api.metadata.user.domain.User</value>
+				<value>java.lang.String</value>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="tenantSecurityProvider"
+			class="com.jaspersoft.jasperserver.multipleTenancy.security.StandardTenantSecurityProvider">
+		<property name="multiTenancyConfiguration"><ref bean="multiTenancyConfiguration"/></property>
+		<property name="tenantService"><ref bean="${bean.hibernateTenantService}"/></property>
+	</bean>
+
+	<bean id="multiTenancyAfterInvocationManager" class="org.springframework.security.access.intercept.AfterInvocationProviderManager">
+		<property name="providers">
+			<list>
+				<ref bean="multiTenancyAfterInvocationProvider"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="multiTenancyAfterInvocationProvider"
+			class="com.jaspersoft.jasperserver.multipleTenancy.security.MultiTenancyAfterInvocationProvider">
+		<property name="roleConfigAttribute" value="ROLE_VISIBLE"/>
+		<property name="userConfigAttribute" value="USER_VISIBLE"/>
+		<property name="securityProvider"><ref local="tenantSecurityProvider"/></property>
+	</bean>
+
+    <bean id="mtAcegiSecurityContextProvider" class="com.jaspersoft.jasperserver.multipleTenancy.security.MTAcegiSecurityContextProvider">
+        <property name="userDetailsService" ref="${bean.internalUserAuthorityService}"/>
+        <property name="userAuthorityService" ref="${bean.internalUserAuthorityService}"/>
+        <property name="mtUserAuthorityService" ref="${bean.internalUserAuthorityService}"/>
+        <property name="anonymousUserDescriptor" ref="anonymousUserDescriptor"/>
+    </bean>
+
+    <bean id="mtSecurityContextProvider" class="org.springframework.aop.framework.ProxyFactoryBean">
+      <property name="interceptorNames">
+        <list>
+          <idref local="mtAcegiSecurityContextProvider"/>
+        </list>
+      </property>
+    </bean>
+
+	<bean id="mtLoginAsUserDetailsService"
+			class="com.jaspersoft.jasperserver.multipleTenancy.security.LoginAsUserDetailsService">
+		<property name="internalDetailsService"><ref bean="${bean.internalUserAuthorityService}"/></property>
+		<property name="tenantSecurityProvider"><ref local="tenantSecurityProvider"/></property>
+		<property name="securityContextProvider"><ref bean="${bean.securityContextProvider}"/></property>
+	</bean>
+
+<!--TODO: SSU - remove this bean   -->
+<!--
+	<bean id="multiTenancyreportJobAclDao"
+			class="com.jaspersoft.jasperserver.multipleTenancy.security.MultiTenancyReportJobAclDao"
+			parent="reportJobAclDao">
+		<property name="configuration"><ref bean="multiTenancyConfiguration"/></property>
+	</bean>
+-->
+
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.BeanReferenceOverrider">
+    	<property name="originalBeanName" value="reportJobAclDao"/>
+    	<property name="overridingBeanName" value="multiTenancyreportJobAclDao"/>
+    </bean>
+
+	<!--<bean id="tenantEffectiveAclsResolver"-->
+			<!--class="com.jaspersoft.jasperserver.multipleTenancy.security.TenantEffectiveAclsResolver">-->
+		<!--<property name="securityProvider"><ref local="tenantSecurityProvider"/></property>-->
+	<!--</bean>-->
+
+    <!--OBJECT PERMISSIONS SECURITY-->
+    <bean id="objectPermissionServiceMethodSecurityInterceptorPro"
+          class="org.springframework.security.access.intercept.aopalliance.MethodSecurityInterceptor">
+        <property name="authenticationManager">
+            <ref local="authenticationManager"/>
+        </property>
+        <property name="afterInvocationManager">
+            <ref local="getPermissionAfterInvocationProviderManagerPro"/>
+        </property>
+        <property name="accessDecisionManager">
+            <ref local="modifyPermissionAccessDecisionManagerPro"/>
+        </property>
+        <property name="securityMetadataSource">
+            <security:method-security-metadata-source>
+                <security:protect method="com.jaspersoft.jasperserver.api.metadata.user.service.ObjectPermissionService.putObjectPermission" access="NOT_PERMISSION_OWNER,NOT_RECIPIENT_ADMINISTRATOR_EX_SU,NOT_RECIPIENT_SU,IS_VISIBLE"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.metadata.user.service.ObjectPermissionService.deleteObjectPermission" access="NOT_PERMISSION_OWNER,NOT_RECIPIENT_ADMINISTRATOR_EX_SU,NOT_RECIPIENT_SU,CAN_ADMINISTER,IS_VISIBLE"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.metadata.user.service.ObjectPermissionService.deleteObjectPermissionForObject" access="ROLE_ADMINISTRATOR,ROLE_SUPERUSER"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.metadata.user.service.ObjectPermissionService.deleteObjectPermissionsForRecipient" access="ROLE_ADMINISTRATOR,ROLE_SUPERUSER"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.metadata.user.service.ObjectPermissionService.getObjectPermissionsForObject" access="NOT_PERMISSION_OWNER,NOT_RECIPIENT_ADMINISTRATOR_EX_SU,NOT_RECIPIENT_SU,CAN_ADMINISTER,IS_VISIBLE"/>
+                <security:protect method="com.jaspersoft.jasperserver.api.metadata.user.service.ObjectPermissionService.getEffectivePermissionsForObject" access="NOT_PERMISSION_OWNER,NOT_RECIPIENT_ADMINISTRATOR_EX_SU,NOT_RECIPIENT_SU,CAN_ADMINISTER,IS_VISIBLE"/>
+            </security:method-security-metadata-source>
+        </property>
+    </bean>
+
+    <bean id="modifyPermissionAccessDecisionManagerPro" class="org.springframework.security.access.vote.UnanimousBased">
+        <constructor-arg name="decisionVoters">
+            <list>
+                <ref bean="roleVoter"/>
+                <ref bean="notPermissionOwnerPermissionArgumentVoter"/>
+                <ref bean="notRecipientAdministratorExceptSuperuserPermissionArgumentVoter"/>
+                <ref bean="notRecipientSuperuserObjectPermissionVoter"/>
+                <ref bean="isAdministrableObjectPermissionArgumentVoter"/>
+                <ref bean="isVisibleToCurrentAuthentificationPermisionArgumentVoter"/>
+            </list>
+        </constructor-arg>
+        <property name="allowIfAllAbstainDecisions"><value>true</value></property>
+    </bean>
+
+    <bean id="getPermissionAfterInvocationProviderManagerPro" class="org.springframework.security.access.intercept.AfterInvocationProviderManager">
+        <property name="providers">
+            <list>
+                <ref bean="notPermissionOwnerPermissionArgumentVoter"/>
+                <ref bean="notRecipientAdministratorExceptSuperuserPermissionArgumentVoter"/>
+                <ref bean="notRecipientSuperuserObjectPermissionVoter"/>
+                <ref bean="isAdministrableObjectPermissionArgumentVoter"/>
+                <ref bean="isVisibleToCurrentAuthentificationPermisionArgumentVoter"/>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="roleSuperuser" class="java.lang.String">
+        <constructor-arg type="java.lang.String">
+            <value>ROLE_SUPERUSER</value>
+        </constructor-arg>
+    </bean>
+
+    <bean id="configurationAllowedRolesPro" class="java.util.ArrayList">
+        <constructor-arg  index="0" type="java.util.Collection">
+            <list merge="true" value-type="java.lang.String">
+                <ref bean="roleSuperuser"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+    <bean id="administrationAllowedRolesPro" class="java.util.ArrayList" parent="administrationAllowedRolesCe">
+        <constructor-arg  index="0" type="java.util.Collection">
+            <list merge="true" value-type="java.lang.String">
+                <ref bean="roleSuperuser"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+</beans>

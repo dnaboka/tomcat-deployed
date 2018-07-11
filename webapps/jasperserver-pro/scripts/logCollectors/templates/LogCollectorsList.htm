@@ -1,0 +1,39 @@
+<div class="content">
+	<div class="header">
+		<div class="title">{{- i18n["logCollectors.title"] }}</div>
+	</div>
+
+	<div class="body">
+		<div class="LogCollectors">
+
+			<div class="subheader">
+				<div class="toolbar">
+					<ul class="list buttonSet">
+						<li class="leaf"><button name="createNewBtn" class="button capsule text up"><span class="wrap">{{- i18n["logCollectors.list.createLogCollector"] }}</span><span class="icon"></span></button></li>
+						<li class="leaf"><button name="stopAllBtn" class="button capsule text up"><span class="wrap">{{- i18n["logCollectors.list.stopAll"] }}</span><span class="icon"></span></button></li>
+						<li class="leaf"><button name="deleteAllBtn" class="button capsule text up"><span class="wrap">{{- i18n["logCollectors.list.deleteAll"] }}</span><span class="icon"></span></button></li>
+					</ul>
+				</div>
+			</div>
+
+			<table class="collectorsList">
+				<thead>
+				<tr>
+					<td class="cOne">{{- i18n["logCollectors.list.collectorName"] }}</td>
+					<td class="cTwo">{{- i18n["logCollectors.list.userId"] }}</td>
+					<td class="cThree">{{- i18n["logCollectors.list.verbosity"] }}</td>
+					<td class="cFour">{{- i18n["logCollectors.list.dataSnapshot"] }}</td>
+					<td class="cFive">{{- i18n["logCollectors.list.status"] }}</td>
+					<td class="cSix"></td>
+				</tr>
+				</thead>
+				<tbody name="collectors">
+				</tbody>
+			</table>
+
+			<div name="nothingToDisplay" class="panel info nothingToDisplay centered_vert centered_horz hidden">
+				{{- i18n["logCollectors.list.noCollectorsFound"] }}
+			</div>
+		</div>
+	</div>
+</div>

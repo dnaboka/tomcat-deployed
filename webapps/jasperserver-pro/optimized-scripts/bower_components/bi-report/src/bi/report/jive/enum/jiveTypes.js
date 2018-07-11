@@ -1,0 +1,1 @@
+define({FUSION_MAP:"fusionMap",FUSION_CHART:"fusionChart",FUSION_WIDGET:"fusionWidget",CHART:"chart",TABLE:"table",COLUMN:"column",GOOGLEMAP:"googlemap",TIBCOMAP:"tibco-maps",CROSSTAB:"crosstab",WEBFONTS:"webfonts",BOOKMARKS:"bookmarks",REPORTPARTS:"reportparts",HYPERLINKS:"hyperlinks",CUSTOM_VISUALIZATION_COMPONENT:"CVComponent"});

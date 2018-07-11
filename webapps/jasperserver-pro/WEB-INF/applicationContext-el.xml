@@ -1,0 +1,426 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:lang="http://www.springframework.org/schema/lang" 
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+       	http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-3.1.xsd">
+
+    <!--
+            2014-03-31  thorick
+                        note:  the 2 top level beans:  operatorDef and functionDef have opposite 'inMemory' defaults:
+
+                               operatorDef:  inMemory == false    pushdown to DBMS
+                               functionDef:  inMemory == true     calculate in memory
+
+    -->
+    <!--  put some commonly used types for validation here -->
+    <!--  we've stretched the notion of ObjectType here to implement validation -->
+    <util:map id="operatorTypes">
+    	<entry key="level" value="#{ objectTypeMapper.checkType('String').acceptValues('Current', 'RowGroup', 'RowTotal', 'ColumnGroup', 'ColumnTotal', 'Total').acceptFunctions('attribute') }"/>
+    	<entry key="category" value="#{ objectTypeMapper.checkType('String').acceptValuesIgnoreCase('USER', 'TENANT', 'SERVER') }"/>
+    </util:map>
+
+	<bean id="castFuncDef" class="com.jaspersoft.commons.dataset.expr.CastFuncOperationDef">
+		<property name="objectType" value="STRING"/>
+		<property name="objectTypeMapper" ref="objectTypeMapper"/>
+		<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.GenericFunction"/>
+		<property name="properties">
+			<map>
+				<!-- show in calc field dialog -->
+				<entry key="inAvailableFunctions" value="true" />
+			</map>
+		</property>
+		<property name="inMemory" value="true"/>
+	</bean>
+
+	<!-- operator definition is how we define available functions and their attributes; here is the base bean -->
+    <bean id="operatorDef" class="com.jaspersoft.commons.dataset.expr.OperatorDefinitionImpl">
+    	<property name="objectType" value="STRING"/>
+    	<property name="objectTypeMapper" ref="objectTypeMapper"/>
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.GenericFunction"/>
+        <property name="inMemory" value="false"/>
+	</bean>	
+	
+	<!-- here are some other beans that are used as parents for various other classes of operators -->
+	<!-- comparison operators, which are broken into two groups:
+	     equals and notEqual can compare numeric, date, and string
+	     greater, less, etc. can only compare numeric and date (we are calling these "scalar" because they have values you can put on a scale)
+	     At some point we could decide to allow all of them to compare strings, but for now let's differentiate them
+	  -->
+    <bean id="comparisonDef" parent="operatorDef" class="com.jaspersoft.commons.dataset.expr.ComparisonOperatorDefinition">
+    	<property name="javaType" value="java.lang.Boolean"/>
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.ComparisonOperator"/>
+        <property name="argumentTypes">
+            <list>
+                <value>#{ objectTypeMapper.checkType('Comparable') }</value>
+                <value>#{ objectTypeMapper.checkType('Comparable') }</value>
+            </list>
+        </property>
+	</bean>	
+
+    <bean id="scalarComparisonDef" parent="comparisonDef">
+    	<property name="javaType" value="java.lang.Boolean"/>
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.ComparisonOperator"/>
+        <property name="argumentTypes">
+            <list>
+                <value>#{ objectTypeMapper.checkType('Scalar') }</value>
+                <value>#{ objectTypeMapper.checkType('Scalar') }</value>
+            </list>
+        </property>
+	</bean>	
+
+	<!-- date comparison operators -->
+    <bean id="dateComparisonDef" parent="operatorDef">
+    	<property name="javaType" value="java.lang.Boolean"/>
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.GenericFunction"/>
+        <property name="inMemory" value="false"/>
+	</bean>	
+
+	<!-- in operator -->
+    <bean id="inDef" parent="comparisonDef">
+    	<property name="javaType" value="java.lang.Boolean"/>
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.In"/>
+    	<!-- TODO check that RHS of 'in' is list or range, and matches type -->
+	</bean>	
+
+	<!-- logical operators -->
+    <bean id="logicalDef" parent="operatorDef">
+    	<property name="javaType" value="java.lang.Boolean"/>
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.LogicalOperator"/>
+    	<property name="argumentTypes">
+    		<list>
+    			<value>#{ objectTypeMapper.checkType('Boolean').varArg() }</value> 
+    		</list>
+    	</property>
+	</bean>	
+
+	<!-- arithmetic operators (have their own operatorDef subclass which has the getJavaType logic in it)-->
+	    <bean id="arithmeticDef" parent="operatorDef" class="com.jaspersoft.commons.dataset.expr.ArithmeticOperatorDefinition">
+	    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.ArithmeticOperator"/>
+	    	<property name="argumentTypes">
+	    		<list>
+	    			<value>#{ objectTypeMapper.checkType('Numeric') }</value>
+	    			<value>#{ objectTypeMapper.checkType('Numeric') }</value>
+	    		</list>
+	    	</property>
+		</bean>
+
+	<!-- any other functions -->
+    <bean id="functionDef" parent="operatorDef">
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.GenericFunction"/>
+		<property name="properties">
+			<map>
+				<!-- show in calc field dialog -->
+				<entry key="inAvailableFunctions" value="true" />
+			</map>
+		</property>
+        <property name="inMemory" value="true"/>
+	</bean>
+
+	<!-- aggregate operators (have custom getJavaType logic for sum and average) -->
+	<bean id="aggregateDef" parent="functionDef" class="com.jaspersoft.commons.dataset.expr.AggregateOperatorDefinition">
+		<property name="properties">
+			<map merge="true">
+				<entry key="aggregate" value="true" />
+			</map>
+		</property>
+        <property name="inMemory" value="false"/>
+	</bean>
+
+	<!-- for agg ops on numerics (sum, etc)-->
+	<bean id="numericAggregateDef" parent="aggregateDef">
+		<property name="argumentTypes">
+    		<list> 
+    			<value>#{ objectTypeMapper.checkType('@Numeric') }</value>
+    			<value>#{ operatorTypes['level'].optional() }</value>
+    		</list>
+    	</property>
+        <property name="inMemory" value="false"/>
+	</bean>
+    
+	<!-- for agg ops on any type (count, distinct count) -->
+	<bean id="anyAggregateDef" parent="aggregateDef">
+		<property name="argumentTypes">
+    		<list> 
+    			<value>#{ objectTypeMapper.checkType('@Any') }</value>
+    			<value>#{ operatorTypes['level'].optional() }</value>
+    		</list>
+    	</property>
+        <property name="inMemory" value="false"/>
+	</bean>
+    
+	<!-- for agg ops on date types (ranges) -->
+	<bean id="dateAggregateDef" parent="aggregateDef">
+		<property name="argumentTypes">
+    		<list> 
+    			<value>#{ objectTypeMapper.checkType('@DateTime') }</value>
+    			<value>#{ operatorTypes['level'].optional() }</value>
+    		</list>
+    	</property>
+        <property name="inMemory" value="false"/>
+	</bean>
+    
+	<!-- for agg ops on date and numeric types (min, max, etc) -->
+	<bean id="comparableAggregateDef" parent="aggregateDef">
+		<property name="argumentTypes">
+    		<list> 
+    			<value>#{ objectTypeMapper.checkType('@Scalar') }</value>
+    			<value>#{ operatorTypes['level'].optional() }</value>
+    		</list>
+    	</property>
+        <property name="inMemory" value="true"/>
+	</bean>
+    
+	<!-- date diff functions (in memory) -->
+	    <bean id="dateDiffFunctionDef" parent="operatorDef">
+	    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.GenericFunction"/>
+	    	<property name="javaType" value="java.math.BigDecimal"/>
+	    	<property name="argumentTypes">
+	    		<list>
+	    			<value>#{ objectTypeMapper.checkType('DateTime') }</value>
+	    			<value>#{ objectTypeMapper.checkType('DateTime') }</value>
+	    		</list>
+	    	</property>
+            <property name="inMemory" value="true"/>
+		</bean>
+
+    <bean id="elapsedTimeFunctionDef" parent="dateDiffFunctionDef">
+        <property name="properties">
+            <map merge="true">
+                <!-- show in calc field dialog -->
+                <entry key="inAvailableFunctions" value="true" />
+            </map>
+        </property>
+	</bean>
+
+    <bean id="rangeTimeFunctionDef" parent="operatorDef">
+         <property name="objectTypeMapper" ref="objectTypeMapper"/>
+       	 <property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.GenericFunction"/>
+         <property name="javaType" value="java.math.BigDecimal"/>
+         <property name="properties">
+             <map merge="true">
+				 <entry key="aggregate" value="true" />
+				 <!-- specifically DO NOT show in calc field function dialog, leave out the property entirely
+                 <entry key="inAvailableFunctions" value="true" />
+                 -->
+             </map>
+         </property>
+         <!-- these can have their args pushed down...see PushdownerImpl -->
+         <property name="inMemory" value="false"/>
+ 	</bean>
+
+
+	<!-- string match functions -->
+    <bean id="stringMatchDef" parent="functionDef">
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.StringMatchOperator"/>
+    	<property name="javaType" value="java.lang.Boolean"/>
+		<property name="argumentTypes">
+    		<list> 
+    			<value>#{ objectTypeMapper.checkType('String') }</value>
+    			<value>#{ objectTypeMapper.checkType('String') }</value>
+    		</list>
+    	</property>
+        <property name="inMemory" value="false"/>
+	</bean>	
+	
+	<!-- percent functions (in memory, aggregate arg) -->
+    <bean id="percentFunctionDef" parent="operatorDef">
+    	<property name="operatorClass" value="com.jaspersoft.commons.dataset.expr.GenericFunction"/>
+    	<property name="javaType" value="java.lang.Double"/>
+    	<property name="argumentTypes">
+    		<list>
+    			<value>#{ objectTypeMapper.checkType('@Numeric') }</value>
+    		</list>
+    	</property>
+        <property name="properties">
+             <map>
+                 <!-- hide from calc field dialog -->
+                 <entry key="inAvailableFunctions" value="false" />
+                 <!-- aggregate percentages by sum -->
+                 <entry key="argumentAggregateFunction" value="sum" />
+             </map>
+        </property>
+        <property name="inMemory" value="true"/>
+	</bean>	
+
+    <!-- re-cast percentFunctions as of JRS release 5.6 -->
+    <bean id="percentFunctionDef56" parent="percentFunctionDef">
+        <property name="properties">
+             <map merge="true">
+                 <!-- show in calc field dialog -->
+                 <entry key="inAvailableFunctions" value="true" />
+             </map>
+        </property>
+		<property name="argumentTypes">
+    		<list> 
+    			<value>#{ objectTypeMapper.checkType('@Numeric') }</value>
+    			<!-- optional? -->
+    			<value>#{ operatorTypes['level'].optional() }</value>
+    		</list>
+    	</property>
+    </bean>
+    <!-- convenience bean for audit function defs: all in SQL, none should be in avail functions -->
+	<bean id="auditFunctionDef" parent="functionDef">
+		<property name="properties">
+			<map>
+				<!-- do NOT show in calc field dialog -->
+				<entry key="inAvailableFunctions" value="false" />
+			</map>
+		</property>
+		<property name="inMemory" value="false" />
+	</bean>
+
+    <!-- 
+        This is the "parent", or template bean, for all expression evaluators.
+        The base class is used for evaluating expressions in the schema.
+      -->
+    <bean id="expressionEvaluator" class="com.jaspersoft.commons.dataset.expr.ExpressionEvaluator" scope="prototype">
+        <!-- match sl config -->
+        <property name="dateFormat" value="MMM dd yyyy"/>
+
+        <property name="objectTypeMapper" ref="objectTypeMapper"/>
+
+        <!-- list of ScopeInitter impls that can mess around with the evaluator -->
+        <property name="scopeInitterList">
+            <list/>
+        </property>
+        <!-- generic expression factory -->
+        <property name="expressionFactory">
+            <bean class="com.jaspersoft.commons.dataset.expr.GenericExpressionFactory">
+            
+            	<!-- 
+            		DomEL functions can be registered here. This is only for metadata currently; any implementations are elsewhere.
+            		And for now, the only metadata is the objectType returned by the expression.
+            		ObjectType is an "abstract type" used by DomEL; see objectTypeMapper bean (below) for the mapping to Java types.
+            	 -->
+                <property name="functionList">
+                	<list>
+                	</list>
+              	</property>
+
+                <!--
+                   2015-07-08 thorick
+                              http://bugzilla.jaspersoft.com/show_bug.cgi?id=42242
+
+                              move the operatorDefinitionList to a ref.
+                              doing this means that only a single set of defs are created and all client share
+                              that set via the ref.   No more overhead of creating the same set, for every client.
+                              Originally done by Bob, it got lost and was dropped from the release.
+                -->
+              	<!-- operatorDefinition is the new way of enumerating operators -->
+              	              	
+                <property name="operatorDefinitionList" ref="operatorDefinitionList">
+
+              	</property>
+                <!-- 
+					functionMap doesn't work any more; create an operator definition instead
+                  -->
+                <property name="functionMap">
+                    <map/>
+                </property>
+                <property name="formatTimestampInGMT" ref="saveTimestampFilterInGMT" />
+            </bean>
+        </property>
+        
+        <!-- hook for function metadata -->
+        <property name="functionFilter" ref="domELMetadataHelper"/>
+        <!-- supplies various functions around validation -->
+        <property name="expressionValidator" ref="domELMetadataHelper"/>
+        <!-- name to create pushdown transformer -->
+        <property name="pushdownBean" value="pushdowner"/>
+        <!-- name to create ratio transformer -->
+        <property name="ratioTransformBean" value="ratioTransform"/>
+    </bean>
+
+    <!-- this map is shared among several beans so I'm breaking it out to make life easier -->
+
+    <bean id="objectTypeMapper" class="com.jaspersoft.commons.dataset.expr.ObjectTypeMapper">
+        <property name="objectTypeMap">
+            <map>
+                <entry key="java.lang.String" value="String"/>
+                
+                <entry key="java.lang.Character" value="Character"/>
+                
+				<!-- these should be in order from smaller to bigger -->
+                <entry key="java.lang.Byte" value="Integer"/>
+                <entry key="java.lang.Short" value="Integer"/>
+                <entry key="java.lang.Integer" value="Integer"/>
+                <entry key="java.lang.Long" value="Integer"/>
+                <entry key="java.math.BigInteger" value="Integer"/>
+                
+				<!-- these should be in order from smaller to bigger -->
+                <entry key="java.lang.Number" value="Decimal"/>
+                <entry key="java.lang.Float" value="Decimal"/>
+                <entry key="java.lang.Double" value="Decimal"/>
+                <entry key="java.math.BigDecimal" value="Decimal"/>
+        
+                <!--  Maintain the ordering for date types, less specific to more specific -->        
+                <entry key="java.util.Date" value="Date"/>
+                <entry key="java.sql.Date" value="Date"/>
+                
+                <entry key="java.sql.Time" value="Time"/>
+                <entry key="org.joda.time.LocalTime" value="Time"/>
+				<entry key="org.joda.time.LocalDate" value="Date"/>
+				<entry key="org.joda.time.LocalDateTime" value="Timestamp"/>
+
+                <entry key="java.sql.Timestamp" value="Timestamp"/>
+
+				<entry key="net.sf.jasperreports.types.date.DateRange" value="Date"/>
+				<entry key="net.sf.jasperreports.types.date.TimestampRange" value="Timestamp"/>
+
+                <entry key="java.lang.Boolean" value="Boolean"/>
+
+                <entry key="org.springframework.security.Authentication" value="Authentication"/>
+                <entry key="java.util.Map" value="Map"/>
+                <entry key="java.util.Collection" value="Collection"/>
+            </map>
+        </property>
+        
+        <!-- type to use for various operators to upgrade types -->
+    	<property name="nextBiggestTypeMap">
+    		<map>
+    			<entry key="java.lang.Byte" value="java.lang.Short"/>
+    			<entry key="java.lang.Short" value="java.lang.Integer"/>
+    			<entry key="java.lang.Integer" value="java.lang.Long"/>
+    			<entry key="java.lang.Long" value="java.math.BigInteger"/>
+
+    			<entry key="java.lang.Float" value="java.lang.Double"/>
+    			<entry key="java.lang.Double" value="java.math.BigDecimal"/>
+    		</map>
+    	</property>
+        
+    </bean>
+
+	<!-- bean with a bunch of type classification code which duplicates ObjectTypeMapper -->
+	<bean id="typeUtil" class="com.jaspersoft.commons.dataset.expr.TypeUtil">
+		<property name="typeMapper" ref="objectTypeMapper"/>
+	</bean>
+	
+	<!-- 
+		this bean has some functions which control various aspects of DomEL that are needed for calc fields:
+		- list DomEL function metadata
+		- provide control over forming aggregate expressions
+	  -->
+    <lang:groovy id="domELMetadataHelper"
+                 refresh-check-delay="5000"
+                 script-source="${resource.root}/groovy/com/jaspersoft/commons/dataset/expr/DomELMetadataHelper.groovy">
+    </lang:groovy>
+	<!--  this bean does pushdown transforms -->
+    <lang:groovy id="pushdowner"
+                 refresh-check-delay="5000"
+                 script-source="${resource.root}/groovy/com/jaspersoft/commons/dataset/expr/PushdownerImpl.groovy">
+    </lang:groovy>
+	<!-- this bean does transforms of aggregates applied to divide or % operator -->
+    <lang:groovy id="ratioTransform"
+                 refresh-check-delay="5000"
+                 script-source="${resource.root}/groovy/com/jaspersoft/commons/dataset/expr/RatioTransformer.groovy">
+    </lang:groovy>
+
+</beans>

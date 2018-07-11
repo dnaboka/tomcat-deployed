@@ -1,0 +1,23 @@
+<tbody class="jr-mDatatable-body jr">
+{{_.each(data, function(row, y) { }}
+<tr class="jr-mDatatable-row jr {{= row.oddEvenClassName }} {{=row[0].className}} ">
+    {{_.each(row, function(cell, x) { }}
+    {{ if (cell) { cell.hyperlink.row.relativeIndex = y }}
+    <td tabindex="-1" class="jr-mDatatable-cell jr jr-jHyperLink"
+        data-row-index="{{=y}}"
+        data-column-index="{{=x}}"
+        data-hyperlink-id="{{=cell.hyperlink.id}}"
+        colspan="{{=cell.colspan}}" rowspan="{{=cell.rowspan}}"
+        title="{{- cell.label }}"
+        {{= widths[x] ? 'style="max-width:' + widths[x] + 'px;"' : ''}}>
+        <div class="jr-mDatatable-cell-wrapper jr" {{= widths[x] && cell.className !== "jr-mDatatable-rowGroup" ? "style='width:" + widths[x] + "px;'" : ''}}>
+            <div class="jr {{- cellTypesFactory(cell.hyperlink.column ? cell.hyperlink.column.type : '') }}">
+                {{- cell.label }}
+            </div>
+        </div>
+    </td>
+    {{ } }}
+    {{ }); }}
+</tr>
+{{ }); }}
+</tbody>

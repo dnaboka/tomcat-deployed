@@ -1,0 +1,1 @@
+define(["require","backbone","../model/ReportExportModel"],function(e){"use strict";var o=e("backbone"),r=e("../model/ReportExportModel");return o.Collection.extend({model:function(e,o){return new r(e,{report:o.collection.report})},initialize:function(e,o){this.report=o.report}})});

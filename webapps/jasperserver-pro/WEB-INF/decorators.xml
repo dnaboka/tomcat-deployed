@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<decorators defaultdir="/WEB-INF/decorators">
+    <!-- Any urls that are excluded will never be decorated by Sitemesh -->
+    <excludes>
+        <!--
+            Don't think we use this anymore
+            <pattern>*ajax*</pattern>
+        -->
+        <!--for adhoc-->
+        <pattern>*adhoc/crosstab*</pattern>
+        <pattern>*adhoc/table*</pattern>
+        <pattern>*adhoc/chart*</pattern>
+        <pattern>*forDashboard*</pattern>
+        <pattern>*RepositoryExplorerAjaxTable*</pattern>
+        <pattern>*ajaxresponse*</pattern>
+        <pattern>*common/download*</pattern>
+        <pattern>*adhocAjaxFilter*</pattern>
+        <pattern>*print=true*</pattern>
+        <!--<pattern>*decorate=no*</pattern>-->
+        <!-- <pattern>*_flowId=dashboardRuntimeFlow*decorate=no*</pattern> --><!-- with this line enabled undecorated dashboard didn't work at all -->
+        <!--dashboard-->
+        <pattern>*modules/dashboard/dashboardDesignerState*</pattern>
+        <pattern>*modules/dashboard/dashboardDesignerControlRenderer*</pattern>
+        <pattern>*modules/dashboard/dashboardDesignerRedirect*</pattern>
+        <pattern>*viewAsDashboardFrame=true*</pattern>
+        <pattern>*dataChooser/redirect*</pattern>
+        <pattern>*dataChooser/cancel*</pattern>
+
+        <!-- Excludes for index.htm-->
+        <pattern>/index.htm</pattern>
+
+        <!-- page used to redirect to external login screen-->
+        <pattern>*/externallogin*</pattern>
+
+        <pattern>*FCExporter*</pattern>
+        <pattern>/WEB-INF/jsp/modules/viewReport/reportOutput.jsp*</pattern>
+        <pattern>/WEB-INF/jsp/modules/requirejs.config.jsp*</pattern>
+        <pattern>/WEB-INF/jsp/modules/visualize.jsp*</pattern>
+        <pattern>/WEB-INF/jsp/modules/xdm.jsp*</pattern>
+
+        <pattern>/WEB-INF/jsp/themeMinimalCss.jsp</pattern>
+
+        <pattern>*bif/*</pattern>
+        <pattern>*JSONState*</pattern>
+
+        <pattern>/*scripts/*</pattern>
+        <pattern>*/getRequirejsConfig.html*</pattern>
+    </excludes>
+
+    <decorator name="main" page="main.jsp">
+        <pattern>/*</pattern>
+    </decorator>
+
+    <decorator name="tiles" page="main_Old.jsp">
+        <pattern>/*decorated_by*</pattern>
+    </decorator>
+
+    <decorator name="empty" page="emptyDecorator.jsp">
+    </decorator>
+
+</decorators>

@@ -1,0 +1,28 @@
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd">
+
+    <bean id="adHocFormattingService" class="com.jaspersoft.ji.adhoc.service.AdHocFormattingServiceImpl"/>
+
+    <util:map id="applyClientTimezoneFormatting" key-type="java.lang.String" value-type="java.lang.Boolean">
+        <entry key="java.util.Date" value="false"/>
+        <entry key="java.sql.Date" value="false"/>
+        <entry key="java.sql.Timestamp" value="true"/>
+        <entry key="java.sql.Time" value="true"/>
+    </util:map>
+
+    <util:map id="interactiveEngineBeans">
+        <entry key="table" value="tableIEngine"/>
+        <entry key="crosstab" value="olapCrosstabIEngine"/>
+        <entry key="olap_crosstab" value="olapCrosstabIEngine"/>
+        <entry key="chart" value="chartIEngine"/>
+        <entry key="ichart" value="intelligentChartIEngine"/>
+        <entry key="olap_ichart" value="intelligentChartIEngine"/>
+        <entry key="dashboard" value="dashboardIEngine"/>
+    </util:map>
+</beans>

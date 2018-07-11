@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+         
+       	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+    <bean id="filePathHelper" class="com.jaspersoft.ji.diagnostic.FilePathHelper"/>
+
+    <bean id="zipArchivator" class="com.jaspersoft.ji.diagnostic.ZipArchivator">
+        <property name="fileBufferSize" value="1024"/>
+    </bean>
+
+    <bean id="logFilterManager" class="com.jaspersoft.ji.diagnostic.LogFilterManager">
+        <property name="serverSettingsVerbosityFilter" ref="serverSettingsVerbosityFilter"/>
+        <property name="diagnosticFilters">
+            <map key-type="com.jaspersoft.ji.diagnostic.Verbosity" value-type="com.jaspersoft.ji.diagnostic.Log4jVerbosityFilterImpl">
+                <entry key="LOW" value-ref="logFilterLow"/>
+                <entry key="MEDIUM" value-ref="logFilterMedium"/>
+                <entry key="HIGH" value-ref="logFilterHigh"/>
+            </map>
+        </property>
+        <property name="logVerbosityManager" ref="logVerbosityManager"/>
+    </bean>
+
+    <bean id="logVerbosityManager" class="com.jaspersoft.ji.diagnostic.LogVerbosityManager">
+        <property name="serverSettingsVerbosityFilter" ref="serverSettingsVerbosityFilter"/>
+        <property name="logConfig" ref="customLoggerToLevelMap"/>
+    </bean>
+
+    <bean id="customLoggerToLevelMap" class="java.util.EnumMap">
+        <constructor-arg>
+            <util:map key-type="com.jaspersoft.ji.diagnostic.Verbosity">
+                <entry key="LOW">
+                    <util:map>
+                        <!-- Add here loggernName-loggerLevel entries for this detalization level -->
+                        <entry key="root" value="ERROR"/>
+                        <entry key="com.jaspersoft" value="ERROR"/>
+                    </util:map>
+                </entry>
+                <entry key="MEDIUM">
+                    <util:map>
+                        <!-- Add here loggernName-loggerLevel entries for this detalization level -->
+                        <entry key="root" value="WARN"/>
+                        <entry key="com.jaspersoft" value="WARN"/>
+                        <entry key="mondrian.mdx" value="WARN"/>
+                    </util:map>
+                </entry>
+                <entry key="HIGH">
+                    <util:map>
+                        <!--  Add here loggernName-loggerLevel entries for this detalization level -->
+                        <entry key="root" value="DEBUG"/>
+                        <entry key="com.jaspersoft" value="DEBUG"/>
+                        <entry key="mondrian.mdx" value="DEBUG"/>
+                        <entry key="com.jaspersoft.jasperserver.api.engine.jasperreports.service.impl.JdbcDataSourceService"
+                               value="DEBUG"/>
+                    </util:map>
+                </entry>
+            </util:map>
+        </constructor-arg>
+    </bean>
+
+    <bean id="diagnosticCollectorService" class="com.jaspersoft.ji.diagnostic.DiagnosticCollectorService">
+        <property name="logVerbosityManager" ref="logVerbosityManager"/>
+        <property name="filePathHelper" ref="filePathHelper"/>
+        <property name="loggerSettingsDumpFileName" value="collectorSettings.xml"/>
+        <property name="appenderPattern" value="%d{ISO8601} %5p %10X{USER_ID} %20X{SESSION_ID} %20X{RESOURCE_URI} %10t %c{1}:%L - %m%n"/>
+        <property name="appenderEncoding" value="UTF-8"/>
+        <!-- See log4j RollingFileAppender for info about configuration -->
+        <!-- If size exceeded, current file is closed and logging output redirects to a new file -->
+        <property name="appenderMaxFileSize" value="50MB"/>
+        <!-- If exceeded, the oldest file is deleted -->
+        <property name="appenderMaxBackupFilesCount" value="20"/>
+        <property name="logFileName" value="diagnostic.log"/>
+        <property name="logFilterManager" ref="logFilterManager"/>
+        <property name="zipArchivator" ref="zipArchivator"/>
+    </bean>
+
+    <bean id="diagnosticParametersWatcherPro" class="com.jaspersoft.ji.diagnostic.DiagnosticParametersWatcherImpl">
+        <property name="diagnosticCollectorService" ref="diagnosticCollectorService"/>
+    </bean>
+
+    <bean id="serverSettingsVerbosityFilter" class="com.jaspersoft.ji.diagnostic.Log4jVerbosityFilterImpl"/>
+    <bean id="logFilterLow" class="com.jaspersoft.ji.diagnostic.Log4jVerbosityFilterImpl"/>
+    <bean id="logFilterMedium" class="com.jaspersoft.ji.diagnostic.Log4jVerbosityFilterImpl"/>
+    <bean id="logFilterHigh" class="com.jaspersoft.ji.diagnostic.Log4jVerbosityFilterImpl"/>
+
+    <bean id="folderValidatorForCollectorName" class="com.jaspersoft.jasperserver.war.validation.FolderValidator">
+        <property name="repository">
+            <ref bean="${bean.repositoryService}"/>
+        </property>
+    </bean>
+
+</beans>

@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:lang="http://www.springframework.org/schema/lang"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd
+       	http://www.springframework.org/schema/lang http://www.springframework.org/schema/lang/spring-lang-3.1.xsd">
+
+
+	<!-- bean that constructs WDS's using a template bean -->
+	<bean id="workingDataSetFactory" class="com.jaspersoft.commons.datarator.WorkingDataSetFactory">
+		<property name="workingDataSetBean" value="workingDataSetTemplate" />
+		<property name="columnGeneratorBean" value="groovyGenerator" />
+		<property name="dimensionDataSetBean" value="dimensionDataSetTemplate" />
+	</bean>
+
+    <bean id="cachedDatasetKey" class="com.jaspersoft.commons.datarator.CachedDatasetKey"/>
+
+    <!--
+		For 5.0, the original dataSetCache implementation is replaced by a cache
+		which wraps an EHCache instance but has the same API.
+		EHCache has its own configuration file format, so the configuration is done in a separate file.
+		The adhocCacheManager bean (below) uses the configuration file "adhoc-ehcache.xml".
+		Some of the properties previously defined in the dataSetCache bean now need to be modified
+		in adhoc-ehcache.xml. Also, times are now in seconds rather than minutes.
+
+		old: defaultTimeoutMinutes
+		new: timeToLiveSeconds
+
+		old: defaultUnusedTimeoutMinutes
+		new: timeToIdleSeconds
+
+		obsolete: cleaner, cleanerInterval (EHCache has its own implementation of cache eviction)
+
+		See adhoc-ehcache.xml for more information.
+	 -->
+
+	<bean id="dataSetCache" class="com.jaspersoft.commons.datarator.EhCacheImpl" destroy-method="shutdown">
+        <property name="adhocCache" ref="adhocCache"/>
+
+        <property name="shadowCache" ref="shadowCache"/>
+		<property name="diagnosticCache" ref="adhocDiagnosticCache"/>
+
+
+      <!--  <property name="mapCache" ref="mapCache"/>-->
+
+		<property name="keyInterceptor" ref="keyInterceptor" />
+		<property name="workingDataSetFactory" ref="workingDataSetFactory" />
+		<property name="columnFactory" ref="dataColumnFactory"/>
+	</bean>
+    <!-- used by dataSetCache...why not set as property?? -->
+    <bean id="allowFlushingCacheOnPush" class="java.lang.Boolean">
+        <constructor-arg value="false"/>
+    </bean>
+    
+    <bean id="keyInterceptor"
+        class="com.jaspersoft.commons.datarator.DefaultCacheKeyInterceptor">
+        <!-- ignoredParameters: parameter names to ignore in the cache key because
+            they aren't relevant to distinguishing the cache entry (used by the default
+            keyInterceptor).  PLEASE KEEP IN ALPHABETICAL ORDER -->
+        <property name="ignoredParameters">
+            <list>
+                <value>HTTP_SERVLET_REQUEST</value>
+                <value>LEAVE_ORIGINAL_CASE_FOR_IDS</value>
+                <value>maxQueryExecutionTimeSec</value>
+                <value>REPORT_CONNECTION</value>
+                <value>REPORT_CONTEXT</value>
+                <value>REPORT_DATA_SOURCE</value>
+                <value>REPORT_LOCALE</value>
+                <value>REPORT_PARAMETERS_MAP</value>
+                <value>REPORT_TEMPLATES</value>
+                <value>REPORT_TIME_ZONE</value>
+                <value>REPORT_URL_HANDLER_FACTORY</value>
+                <value>REPORT_VIRTUALIZER</value>
+                <value>slFactory</value>
+                <value>slSchema</value>
+                <!-- we should ignore LoggedInUsername, because it is duplicated of LoggedInUser -->
+                <value>LoggedInUsername</value>
+                <!-- LoggedInUser is required if you don't want to share same cache for different users -->
+                <!-- Only ignore LoggedInUser unless you want your users to share the same cache  -->
+                <!-- <value>LoggedInUser</value> -->
+            </list>
+        </property>
+        <property name="removeDatabaseTimeZoneIfSameAsDefault" value="true"/>
+    </bean>
+
+    <bean id="treeNodeCacheStore" class="com.jaspersoft.commons.datarator.TreeNodeCacheImpl">
+        <property name="treeNodeCache" ref="treeNodeCache"/>
+    </bean>
+
+    <bean id="aggregateColumnCacheStore" class="com.jaspersoft.commons.AggregateColumnCacheImpl">
+        <property name="aggregateColumnCache" ref="aggregateColumnCache"/>
+    </bean>
+
+    <bean id="shadowCache" class="com.jaspersoft.commons.datarator.ShadowCacheImpl">
+        <property name="stagedCacheOne" ref="stagedCacheOne"/>
+        <property name="stagedCacheTwo" ref="stagedCacheTwo"/>
+        <property name="stagedKey" ref="stagedKey"/>
+
+    </bean>
+
+
+	<bean id="adhocDiagnosticCache" class="com.jaspersoft.commons.datarator.DiagnosticCache">
+		<property name="diagnosticAdhocCache" ref="diagnosticAdhocCache"/>
+		<property name="diagnosticAdhocKeyCache" ref="diagnosticAdhocKeyCache"/>
+	</bean>
+
+    <!--
+	dataColumnFactory is now configurable via Spring so you can set up new types
+	 -->
+
+	<bean id="dataColumnFactory" class="com.jaspersoft.commons.datarator.DataColumnFactory">
+		<property name="properties">
+			<map>
+				<entry key="compareStringImpls" value="false"/>
+				<entry key="rowSetInitGranularity" value="1000"/>
+			</map>
+		</property>
+		<property name="columnImplementations">
+			<map>
+		        <entry key="java.lang.String" value="com.jaspersoft.commons.datarator.DataColumnFactory$StringAdapter"/>
+		        <entry key="java.lang.Byte" value="com.jaspersoft.commons.datarator.DataColumnFactory$ByteAdapter"/>
+		        <entry key="java.lang.Short" value="com.jaspersoft.commons.datarator.DataColumnFactory$ShortAdapter"/>
+		        <entry key="java.lang.Integer" value="com.jaspersoft.commons.datarator.DataColumnFactory$IntegerAdapter"/>
+		        <entry key="java.lang.Long" value="com.jaspersoft.commons.datarator.DataColumnFactory$LongAdapter"/>
+		        <entry key="java.lang.Float" value="com.jaspersoft.commons.datarator.DataColumnFactory$FloatAdapter"/>
+		        <entry key="java.lang.Double" value="com.jaspersoft.commons.datarator.DataColumnFactory$DoubleAdapter"/>
+		        <entry key="java.lang.Number" value="com.jaspersoft.commons.datarator.DataColumnFactory$DoubleAdapter"/>
+		        <entry key="java.util.Date" value="com.jaspersoft.commons.datarator.DataColumnFactory$DateAdapter"/>
+		        <entry key="java.sql.Date" value="com.jaspersoft.commons.datarator.DataColumnFactory$SqlDateAdapter"/>
+		        <entry key="java.sql.Time" value="com.jaspersoft.commons.datarator.DataColumnFactory$SqlTimeAdapter"/>
+		        <entry key="java.sql.Timestamp" value="com.jaspersoft.commons.datarator.DataColumnFactory$TimestampAdapter"/>
+		        <entry key="java.math.BigDecimal" value="com.jaspersoft.commons.datarator.DataColumnFactory$MoneyAdapter"/>
+		        <entry key="java.math.BigInteger" value="com.jaspersoft.commons.datarator.DataColumnFactory$BigIntegerAdapter"/>
+		        <entry key="java.lang.Boolean" value="com.jaspersoft.commons.datarator.DataColumnFactory$BooleanAdapter"/>
+		        <entry key="java.lang.Object" value="com.jaspersoft.commons.datarator.DataColumnFactory$ObjectAdapter"/>
+			</map>
+		</property>
+        <property name="intSetFactory">
+            <bean class="com.jaspersoft.commons.intset.IntSetFactoryImpl"/>
+        </property>
+	</bean>
+
+
+    <bean id="treeNodeCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+        <property name="cacheManager" ref="aggregateCacheManager"/>
+        <property name="cacheName" value="treeNodeCache" />
+    </bean>
+
+    <bean id="aggregateColumnCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+        <property name="cacheManager" ref="aggregateCacheManager"/>
+        <property name="cacheName" value="aggregateColumnCache" />
+    </bean>
+
+	<bean id="adhocCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+		<property name="cacheManager" ref="adhocCacheManager"/>
+		<property name="cacheName" value="adhocCache" />
+	</bean>
+
+    <bean id="stagedCacheOne" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+        <property name="cacheManager" ref="adhocCacheManager"/>
+        <property name="cacheName" value="stagedCacheOne" />
+    </bean>
+
+    <bean id="stagedCacheTwo" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+        <property name="cacheManager" ref="adhocCacheManager"/>
+        <property name="cacheName" value="stagedCacheTwo" />
+    </bean>
+
+    <bean id="stagedKey" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+        <property name="cacheManager" ref="adhocCacheManager"/>
+        <property name="cacheName" value="stagedKey" />
+    </bean>
+
+	<bean id="diagnosticAdhocCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+		<property name="cacheManager" ref="adhocCacheManager"/>
+		<property name="cacheName" value="diagnosticAdhocCache" />
+	</bean>
+
+	<bean id="diagnosticAdhocKeyCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+		<property name="cacheManager" ref="adhocCacheManager"/>
+		<property name="cacheName" value="diagnosticAdhocKeyCache" />
+	</bean>
+
+    <!--<bean id="mapCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean" lazy-init="true">
+        <property name="cacheManager" ref="adhocCacheManager"/>
+        <property name="cacheName" value="mapCache" />
+    </bean>
+-->
+	<bean id="adhocCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" depends-on="sysProperties">
+		<property name="configLocation">
+			<value>${resource.root}/adhoc-ehcache.xml</value>
+		</property>
+	</bean>
+
+    <bean id="aggregateCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" depends-on="sysProperties">
+        <property name="configLocation">
+            <value>${resource.root}/aggregate-ehcache.xml</value>
+        </property>
+    </bean>
+
+
+	<!-- template WDS bean which allows us to init the WDS with all the stuff
+		that Groovy needs -->
+	<bean id="workingDataSetTemplate" class="com.jaspersoft.commons.datarator.WorkingDataSet"
+		scope="prototype">
+		<property name="expressionEvaluator">
+			<bean parent="dataSetExpressionEvaluator" scope="prototype" />
+		</property>
+		<property name="categorizerFactory" ref="categorizerFactory" />
+		<property name="columnFactory" ref="dataColumnFactory"/>
+        <property name="aggregateColumnCacheStore" ref="aggregateColumnCacheStore"/>
+	</bean>
+	<!-- DimensionDataSet is based on WDS and is used for xtab -->
+	<bean id="dimensionDataSetTemplate" parent="workingDataSetTemplate"
+		class="com.jaspersoft.commons.dimengine.DimensionDataSetImpl" scope="prototype" >
+		<property name="axisTransformerFactory" ref="axisTransformerFactory"/>
+		<!-- absolute limit on how many nodes can be in any axis -->
+		<property name="axisNodeLimit" value="100000"/>
+	</bean>
+
+	<!-- AxisTransformers are used by the TreeNodeBuilder to modify the contents of the axis based on 
+	     the AxisTransformation for that axis, currently stored in the state.
+	  -->
+	<bean id="axisTransformerFactory" class="com.jaspersoft.commons.dimengine.axistransform.AxisTransformerFactoryImpl">
+		<property name="transformerList">
+			<list>
+				<value>com.jaspersoft.commons.dimengine.axistransform.SortByMeasureTransformer</value>
+				<value>com.jaspersoft.commons.dimengine.axistransform.SortByHeaderTransformer</value>
+				<value>com.jaspersoft.commons.dimengine.axistransform.TopOrBottomNTransformer</value>
+				<value>com.jaspersoft.commons.dimengine.axistransform.MultiTransformer</value>
+			</list>
+		</property>
+	</bean>
+
+
+    <bean id ="aggregateFactory" class="com.jaspersoft.commons.datarator.AggregateFactory">
+        <property name="precision" value="2">
+        </property>
+    </bean>
+
+    <bean id="groovyGenerator" class="com.jaspersoft.commons.groovy.GroovyGenerator" scope="prototype">
+        <property name="springyLoader" ref="groovySpringyLoader" />
+        <property name="groovySourceCacher" ref="groovySourceCacher" />
+        <property name="groovyBaseColumn" value="groovy_column.BaseGroovyColumn" />
+
+        <property name="runtimeProperties">
+            <map>
+                <entry key="monthLength" value="30" />
+                <entry key="precision" value="2" />
+            </map>
+        </property>
+        <property name="conversionMap">
+               <map>
+                   <entry key="java.util.Date" value="toDate" />
+                   <entry key="java.sql.Time" value="toTime" />
+                   <entry key="java.sql.Timestamp" value="toTimestamp" />
+               </map>
+        </property>
+		<!-- provide access to the same vars that are available in SQLGenerator -->
+		<property name="groovyRunner" ref="groovyRunner" />
+		<property name="columnFactory" ref="dataColumnFactory"/>
+		<property name="imports">
+			<list>
+		        <value>import org.joda.time.*</value>
+		        <value>import com.jaspersoft.commons.dataset.*</value>
+        		<value>import com.jaspersoft.commons.datarator.*</value>
+				<value>import com.jaspersoft.commons.dimengine.*</value>
+			</list>
+		</property>
+        <property name="preprocessor" ref="defaultPreprocessor" />
+	</bean>
+
+    <!-- this bean does preprocessing of DomEL expressions going into either GroovyGenerator or SQLGenerator,
+         but by default it doesn't do anything.
+         You can turn on pre-evaluation of "groovy()" functions by setting "preprocessGroovy" to true
+         -->
+    <lang:groovy id="defaultPreprocessor"
+                 refresh-check-delay="5000"
+                 script-source="${resource.root}/groovy/com/jaspersoft/commons/groovy/DefaultPreprocessor.groovy">
+        <lang:property name="groovyRunnerFactory" ref="groovyRunner" />
+        <lang:property name="expressionEvaluator" ref="expressionEvaluator" />
+        <lang:property name="preprocessGroovy" value="false" />
+    </lang:groovy>
+
+    <!-- factory for customizing compilation of Groovy scripts, including sandboxing (disabled by default)
+         See the source of this bean for more information on sandboxing and customizing Groovy in general. -->
+    <lang:groovy id="groovyCustomizerFactory"
+                 refresh-check-delay="5000"
+                 script-source="${resource.root}/groovy/com/jaspersoft/commons/groovy/GroovyCustomizerFactoryImpl.groovy">
+    </lang:groovy>
+
+    <!-- A wrapper around the GroovyScriptEngine, which is a loader for Groovy
+        classes which can reload on updates. It leverages the Spring resourceLoader
+		to get Groovy scripts from a path under the webapp root. -->
+	<bean id="groovySpringyLoader" class="com.jaspersoft.commons.groovy.GroovySpringyLoader">
+		<property name="groovyScriptRoot" value="${resource.root}/groovy/" />
+	</bean>
+    <!-- 
+        This is another way we are twisting the Groovy loading to our own ends.
+        The goal is to be able to generate arbitrary Groovy classes based on DomEL expressions,
+        but still take advantage of caching of stuff we've already compiled.
+        Normally, a class loader maps a class name like "foo.bar.Baz" to a compiled class,
+        but we want to cache it by the actual code.
+     -->
+    <bean id="groovySourceCacher" class="com.jaspersoft.commons.groovy.GroovySourceCacher">
+        <constructor-arg ref="groovySpringyLoader"/>
+        <!-- after the number of distinct classes exceeds this number, we release the script engine so its classes can be garbage collected -->
+        <property name="maxSourcesPerScriptEngine" value="10000"/>
+    </bean>
+
+    <bean id="adHocViewExecutorCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean"
+          lazy-init="true">
+        <property name="cacheManager" ref="adHocViewExecutorCacheManager"/>
+        <property name="cacheName" value="adHocViewExecutorCache" />
+    </bean>
+
+    <bean id="adHocViewExecutorCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" depends-on="sysProperties">
+        <property name="configLocation">
+            <value>${resource.root}/adhocview-executor-ehcache.xml</value>
+        </property>
+    </bean>
+
+</beans>

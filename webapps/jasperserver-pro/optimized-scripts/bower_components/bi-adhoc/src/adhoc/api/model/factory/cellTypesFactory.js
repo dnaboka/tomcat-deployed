@@ -1,0 +1,1 @@
+define(["require"],function(e){return function(e){var a="jr-mDatatable-cell-";switch(e){case"bigDecimal":case"byte":case"short":case"float":case"integer":case"long":case"double":case"decimal":return a+"number";case"date":case"time":case"timestamp":return a+"date";default:return a+"text"}}});

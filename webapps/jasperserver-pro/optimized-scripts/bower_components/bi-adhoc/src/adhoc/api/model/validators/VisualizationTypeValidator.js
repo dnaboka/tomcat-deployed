@@ -1,0 +1,1 @@
+define(["require","underscore"],function(e){var a=e("underscore");return{validate:function(e,i,n){if(i.canvas&&i.canvas.type){var r=e.dataSet.query.getAllowedTypesList();if(!a.contains(r,i.canvas.type))return{message:"The specified visualization type is invalid.",errorCode:"visualization.type.invalid",parameters:[i.canvas.type]}}}}});

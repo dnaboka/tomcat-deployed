@@ -1,0 +1,1 @@
+define(["require","backbone"],function(e){"use strict";var n=e("backbone");return n.Model.extend({defaults:{report:{chart:{},loadingOverlay:!0},_canUndo:!1,_canRedo:!1,_canvasReady:!1},initialize:function(){this.state=new n.Model}})});

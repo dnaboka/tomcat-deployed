@@ -1,0 +1,1 @@
+define(["require","underscore","../../base/componentViewTrait/textTrait"],function(e){"use strict";var t=e("underscore"),n=e("../../base/componentViewTrait/textTrait");return t.extend({},n,{_renderComponent:function(){var e=this.model.get("text");this.component.render(e),this.trigger("componentRendered",this)},resize:function(){this.component.applyFontSize()}})});

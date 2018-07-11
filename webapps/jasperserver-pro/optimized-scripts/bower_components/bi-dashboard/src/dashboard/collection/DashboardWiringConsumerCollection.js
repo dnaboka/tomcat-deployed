@@ -1,0 +1,1 @@
+define(["require","backbone","../model/DashboardWiringConsumerModel"],function(e){"use strict";var o=e("backbone"),n=e("../model/DashboardWiringConsumerModel");return o.Collection.extend({model:n})});

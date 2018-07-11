@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<flow xmlns="http://www.springframework.org/schema/webflow" xmlns:ns0="http://www.w3.org/2001/XMLSchema-instance"
+      ns0:schemaLocation="http://www.springframework.org/schema/webflow http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd"
+      start-state="editMondrianPropertiesForm">
+
+    <!-- Transitions whose 'on' attributes check for externalContext.nativeRequest.method == 'POST' will happen
+    only if the reqest's http method is POST.  This was done to protect sensitive areas against CSRF attacks.
+    Currently, CSRFGuard only protects POST, PUT, DELETE; we want to avoid all server state changing requests via GET, etc.. -->
+    <view-state id="editMondrianPropertiesForm" view="modules/administer/analysisOptions">
+        <!-- there is no init function in editMondrianPropertiesAction
+          <on-entry>
+            <evaluate expression="editMondrianPropertiesAction.init"/>
+        </on-entry -->
+        <transition on="flushCache" to="flushCache"/>
+        <transition on="${currentEvent.id == 'saveSingleProperty' and externalContext.nativeRequest.method == 'POST'}" to="saveSingleProperty"/>
+    </view-state>
+
+    <action-state id="saveSingleProperty">
+        <evaluate expression="editMondrianPropertiesAction.saveSingleProperty"/>
+        <transition on="success" to="ajaxView"/>
+        <!--<transition on="error" to="displayError"/>-->
+    </action-state>
+
+    <view-state id="ajaxView" view="ajax/ajaxresponse"/>
+
+    <view-state id="ajaxError" view="ajax/ajaxerror"/>
+
+    <action-state id="flushCache">
+        <evaluate expression="olapManagementAction.flushCache"/>
+        <transition on="success" to="ajaxView"/>
+        <transition on="error" to="ajaxError"/>
+    </action-state>
+
+    <view-state id="errorPage" view="modules/system/errorPage">
+        <on-entry>
+            <evaluate expression="errorPageHandlerAction"/>
+        </on-entry>
+    </view-state>
+
+    <global-transitions>
+        <transition on-exception="java.lang.Throwable" to="errorPage"/>
+    </global-transitions>
+
+    <!-- end exceptions handling -->
+    <bean-import resource="spring-config.xml"/>
+
+    <bean-import resource="mondrianActionBeans.xml"/>
+
+</flow>

@@ -1,0 +1,1 @@
+define(["require","underscore","jquery","./BaseComponentModel"],function(e){"use strict";var n=(e("underscore"),e("jquery"),e("./BaseComponentModel"));return n.extend({defaults:{alignment:"Right"},initialize:function(e,n){this.unset("label",{silent:!0})}})});

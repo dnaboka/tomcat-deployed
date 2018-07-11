@@ -1,0 +1,1 @@
+define(["require","backbone"],function(e){"use strict";var n=e("backbone");return n.Model.extend({idAttribute:"consumer",defaults:{consumer:void 0}})});

@@ -1,0 +1,1118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:util="http://www.springframework.org/schema/util"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.1.xsd
+       http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.1.xsd">
+
+    <context:component-scan base-package="com.jaspersoft.ji.adhoc,com.jaspersoft.ji.adhoc_engine,com.jaspersoft.ji.adhoc_engine.query"/>
+
+    <util:set id="providedQueryDatasourceTypes" value-type="java.lang.Class">
+       <value>com.jaspersoft.ji.adhoc.AdhocDataView</value>
+    </util:set>
+
+    <util:set id="queryDatasourceTypes" value-type="java.lang.Class">
+        <value>com.jaspersoft.ji.adhoc.AdhocDataView</value>
+        <value>com.jaspersoft.jasperserver.api.metadata.jasperreports.domain.ReportUnit</value>
+        <value>com.jaspersoft.commons.semantic.DataDefinerUnit</value>
+        <value>com.jaspersoft.commons.semantic.datasource.SemanticLayerDataSource</value>
+    </util:set>
+    <!--
+       cache and groovy stuff is now in aC-datarator.xml
+       data strategy is in aC-adhoc-dataStrategy.xml
+       repo interactions now in aC-adhoc-repository.xml
+     -->
+
+
+    <!--
+        template for AdhocUnifiedState (adhocEngineService uses it to create, easyXMLizer uses it to reinit saved one)
+      -->
+    <bean id="adhocUnifiedStateTemplate" class="com.jaspersoft.ji.adhoc.AdhocUnifiedState" scope="prototype">
+        <!-- In addition you get "content" size (table size, chart size, crosstab size) for free.
+            This means stretch the page to fit the report.
+            Dimensions are in pixels. height and width are interchangeable - user can select portrait or lanscape -
+            but we are assuming page is initially portrait, so MAKE SURE THE SHORTER DIMENSION GOES FIRST!
+            Make sure new paper sizes are added to teh appropriate action model if you wnat them to be listed in the menu -->
+        <property name="paperSizes">
+            <map>
+                <entry key="letter" value="612x792"/>
+                <entry key="a4" value="595x842"/>
+            </map>
+        </property>
+        <property name="allowBandSplit" value="false"/>
+        <property name="defaultProperties">
+            <map>
+                <entry key="table" value-ref="tableDefaults"/>
+                <entry key="chart" value-ref="chartDefaults"/>
+                <entry key="crosstab" value-ref="crosstabDefaults"/>
+                <entry key="olap_crosstab" value-ref="crosstabDefaults"/>
+                <entry key="dashboard" value-ref="dashboardDefaults"/>
+                <entry key="ichart" value-ref="ichartDefaults"/>
+                <entry key="olap_ichart" value-ref="ichartDefaults"/>
+            </map>
+        </property>
+        <property name="intelligentChartState" ref="iChartStateDelegateTemplate"/>
+        <property name="adHocViewMigrationConverter" ref="adHocViewMigrationConverter"/>
+        <property name="dataSourceLinker" ref="dataSourceLinker"/>
+    </bean>
+
+    <!--
+        Template for IntelligentChartStateDelegate. Used to initialize it with default values.
+        It is useful for upgrades when new properties are added and we have to set some default values for them in case
+        existing object is loaded which did not have such property before.
+    -->
+    <bean id="iChartStateDelegateTemplate" class="com.jaspersoft.ji.adhoc.IntelligentChartStateDelegate" scope="prototype">
+        <!--Axis tab-->
+        <property name="showMeasureOnValueAxis" value="true"/>
+        <property name="showXAxisLabels" value="true"/>
+        <property name="xAxisStep" value="1"/>
+        <property name="showYAxisLabels" value="true"/>
+        <property name="yAxisStep" value="1"/>
+        <property name="labelOffset" value="0"/>
+        <property name="xAxisRotation" value="-45"/>
+        <property name="rotateAllLevels" value="false"/>
+        <property name="yAxisRotation" value="0"/>
+        <property name="thousandSeparator" value="None"/>
+        <property name="decimalPoint" value="."/>
+        <property name="invertedAxis" value="false"/>
+
+        <!--Data tab-->
+        <property name="showDataPoints" value="true"/>
+        <property name="showLabels" value="false"/>
+        <property name="rotation" value="0"/>
+        <property name="alignment" value="bottom"/>
+
+        <!--Other tab-->
+        <property name="singleAxisComboChart" value="false"/>
+        <property name="donnutInnerSize" value="40"/>
+        <property name="legend" value="bottom"/>
+        <property name="legendBorder" value="true"/>
+        <property name="showSingleMeasuresLabels" value="true"/>
+        <property name="autoScaleFonts" value="true"/>
+
+        <!--Ranges tab-->
+        <property name="gaugesMinValue" value="0"/>
+        <property name="gaugesMaxValue" value="200"/>
+        <property name="color1Stop" value=".1"/>
+        <property name="color2Stop" value=".5"/>
+        <property name="color3Stop" value=".9"/>
+    </bean>
+
+	<!-- the following four entries set initial values for adhoc table, crosstab,
+		chart and dashboard respectively -->
+	<util:map id="tableDefaults">
+		<entry key="titleHeight" value="40" />
+		<entry key="hasMargins" value="true" />
+		<!-- pageOrientation: possible values are Portrait and Landscape -->
+		<entry key="pageOrientation" value="Portrait" />
+		<!-- paperSize: possible values are letter and a4 -->
+		<entry key="paperSize" value="content" />
+		<!-- number of rows displayed in the Ad Hoc designer -->
+		<entry key="maxRows" value="15" />
+		<!-- maximum increment size for infinite scrolling in report view -->
+		<entry key="maxViewModelRows" value="30" />
+	</util:map>
+
+    <util:map id="crosstabDefaults">
+        <entry key="theme" value="default" />
+        <entry key="titleHeight" value="40" />
+        <entry key="hasMargins" value="true" />
+        <!-- pageOrientation: possible values are Portrait and Landscape -->
+        <entry key="pageOrientation" value="Landscape" />
+        <!-- paperSize: possible values are letter and a4 -->
+        <entry key="paperSize" value="content" />
+        <!-- maxRows: initial value for the number of rows used in calculating
+            a crosstab in the Ad Hoc editor; this must take one of the values under "maxRowChoices"
+            below -->
+        <entry key="maxRows" value="100" />
+        <!-- maxRowChoices: a list of choices for the "Preview Size" menu item;
+            0 means to use all the available rows -->
+        <entry key="maxRowChoices">
+            <list>
+                <value>100</value>
+                <value>1000</value>
+                <value>10000</value>
+                <value>0</value>
+            </list>
+        </entry>
+        <!-- the maxDisplay choices limit the displayed size of the crosstab, but
+            this feature is currently not used -->
+        <entry key="maxDisplayRows" value="0" />
+        <entry key="maxDisplayColumns" value="0" />
+        <entry key="maxDisplayChoices">
+            <list>
+                <value>20</value>
+                <value>40</value>
+                <value>60</value>
+                <value>80</value>
+                <value>100</value>
+                <value>150</value>
+                <value>200</value>
+                <value>0</value>
+            </list>
+        </entry>
+        <!-- maximum increment size for paged view model creation -->
+        <entry key="maxViewModelRows" value="0" /> <!-- No max -->
+        <!-- minimum group members to trigger overflow link in safe mode -->
+        <entry key="maxSafeGroupMembers" value="50" />
+    </util:map>
+
+    <util:map id="ichartDefaults">
+        <entry key="theme" value="default" />
+        <entry key="titleHeight" value="40" />
+        <entry key="hasMargins" value="false" />
+        <!-- pageOrientation: possible values are Portrait and Landscape -->
+        <entry key="pageOrientation" value="Portrait" />
+        <!-- paperSize: possible values are letter and a4 -->
+        <entry key="paperSize" value="content" />
+        <!-- number of rows displayed in the Ad Hoc editor -->
+        <entry key="maxRows" value="0" /> <!-- No max -->
+        <!-- maximum increment size for paged view model creation -->
+        <entry key="maxViewModelRows" value="0" /> <!-- No max -->
+    </util:map>
+
+    <util:map id="chartDefaults">
+        <entry key="theme" value="default" />
+        <entry key="titleHeight" value="40" />
+        <entry key="hasMargins" value="false" />
+        <!-- pageOrientation: possible values are Portrait and Landscape -->
+        <entry key="pageOrientation" value="Portrait" />
+        <!-- paperSize: possible values are letter and a4 -->
+        <entry key="paperSize" value="content" />
+        <!-- number of rows displayed in the Ad Hoc editor -->
+        <entry key="maxRows" value="0" /> <!-- No max -->
+        <!-- maximum increment size for paged view model creation -->
+        <entry key="maxViewModelRows" value="0" /> <!-- No max -->
+        <!--zoom factor in pixels -->
+        <entry key="zoomFactor" value="5" />
+        <!-- default chart type -->
+        <entry key="chartType" value="bar" />
+        <!-- chart level title - this is NOT the same as the report title -->
+        <entry key="chartTitle" value="" />
+        <!-- default chart position -->
+        <entry key="chartX" value="0" />
+        <entry key="chartY" value="0" />
+        <!-- default chart dimensions -->
+        <entry key="chartWidth" value="500" />
+        <entry key="chartHeight" value="300" />
+
+        <!-- legends and labels -->
+        <entry key="displayLegendForPie" value="false" />
+        <entry key="displayLegendForOther" value="true" />
+        <entry key="displayXAxisLabel" value="true" />
+        <entry key="displayYAxisLabel" value="false" />
+
+        <!-- display options -->
+        <entry key="displayPointsInLinePlots" value="true" />
+        <entry key="stackAreaPlots" value="true" />
+        <entry key="stackBarPlots" value="false" />
+        <entry key="pieChart3D" value="true" />
+        <entry key="barChart3D" value="true" />
+        <entry key="barChartVertical" value="true" />
+    </util:map>
+
+    <util:map id="dashboardDefaults">
+        <entry key="titleHeight" value="40" />
+        <!-- paperSize: possible values are letter and a4 -->
+        <entry key="paperSize" value="content" />
+        <entry key="gridSize" value="20" />
+        <!--needs to be valid integer or decimal number -->
+        <entry key="autoRefreshOptions">
+            <list>
+                <!--manual is == 0 which is now part of dashboard.designer.js -->
+                <!--<value>0</value> -->
+                <value>1</value>
+                <value>2.5</value>
+                <value>5.0</value>
+                <value>15</value>
+                <value>30</value>
+            </list>
+        </entry>
+        <entry key="layoutSize" value="1024x768" />
+        <entry key="layoutSizeOptions">
+            <list>
+                <value>1280x1024</value>
+                <value>1280x768</value>
+                <value>1152x864</value>
+                <value>1024x768</value>
+                <value>800x600:800x700</value>
+            </list>
+        </entry>
+    </util:map>
+
+    <bean id="adhocConfiguration" class="com.jaspersoft.ji.adhoc.config.AdhocConfiguration">
+        <property name="displayNullAsZeroForAggregateValue" value="false"/>
+        <!--Maximum number of AdHoc OLAP filter values. Can be overridden there or in
+         Manage->Olap Settigs->adhoc.olap.maxFilterValues.-->
+        <property name="adhocOlapMaxFilters" value="100000"/>
+    </bean>
+
+    <!--
+        interactive engine objects used to handle ad hoc ui
+        these get created when you start or reinitialize ad hoc (for example, when switching modes)
+        old crosstab engine replaced by unified engine for olap & non-olap
+      -->
+    <bean id="tableIEngine" class="com.jaspersoft.ji.adhoc.InteractiveTableEngine" scope="prototype">
+        <property name="inputControlsLogicService" ref="inputControlsLogicService"/>
+    </bean>
+    <bean id="chartIEngine" class="com.jaspersoft.ji.adhoc.InteractiveChartEngine" scope="prototype">
+        <property name="inputControlsLogicService" ref="inputControlsLogicService"/>
+    </bean>
+    <bean id="dashboardIEngine" class="com.jaspersoft.ji.adhoc.InteractiveDashboardEngine" scope="prototype">
+    </bean>
+    <!--  This guy is created by the AdhocEngineServiceImpl the same way as the rest,
+    	  but we are organizing the view resources by putting them in the view object instead of getting them from adhocEngine.
+    	  The IEngine uses Spring to create the view to make this work.
+      -->
+
+    <bean id="abstractIEngine"  abstract="true" class="com.jaspersoft.ji.adhoc.InteractiveCrosstabBaseEngine" scope="prototype">
+        <property name="formatterFactory" ref="categorizationFormatFactory"/>
+        <property name="axisTransformerPathConverter" ref="axisTransformerPathConverter"/>
+    </bean>
+
+
+    <bean id="olapCrosstabIEngine" class="com.jaspersoft.ji.adhoc.InteractiveCrosstabEngine" scope="prototype" parent="abstractIEngine">
+        <property name="viewBeanName" value="olapCrosstabViewModel"/>
+        <!-- set to true to enable drill-down -->
+        <property name="autoExpand" value="false"/>
+        <property name="inputControlsLogicService" ref="inputControlsLogicService"/>
+    </bean>
+
+    <bean id="intelligentChartIEngine" class="com.jaspersoft.ji.adhoc.InteractiveIntelligentChartEngine" scope="prototype" parent="abstractIEngine">
+        <property name="viewBeanName" value="intelligentChartViewModel"/>
+        <property name="inputControlsLogicService" ref="inputControlsLogicService"/>
+        <property name="adhocConfiguration" ref="adhocConfiguration"/>
+    </bean>
+
+    <bean id="intelligentChartViewModel" class="com.jaspersoft.ji.adhoc.IntelligentChartViewModel" scope="prototype">
+    </bean>
+
+    <bean id="olapCrosstabViewModel" class="com.jaspersoft.ji.adhoc.CrosstabViewModel" scope="prototype">
+        <!--
+            Keeping the view-related resources here.
+            The other views have the values copied from adhocEngine (viewStylesheets, viewScripts, etc.)
+            These resources can vary if the view is presentation mode or is used in a dashboard.
+            A default value is kept in the default map, but can be overridden if it changes for a given view.
+         -->
+        <property name="allViewResources">
+            <map>
+                <!-- fallback for most common cases -->
+                <entry key="DEFAULT">
+                    <map>
+                        <!-- url used for ajax requests -->
+                        <entry key="ajaxControllerURL" value="crosstab.html"/>
+
+                        <!--  jsp path; this needs to be separate in case of filter panel,
+                              because you need to use it in a jsp include (relative path) and in the AjaxController,
+                              where you are using it as the view a ModelAndView -->
+                        <entry key="JSPPath" value="modules/adhoc/"/>
+
+                        <!--  jsp for container page -->
+                        <entry key="mainPage"  value="modules/adhoc/adHocDesigner"/>
+
+                        <!-- this is the one referenced by setReportModelInContext(); not sure if these need to be different? -->
+                        <entry key="mainViewName" value="modules/adhoc/adHocDesigner"/>
+
+                        <!--  jsp for main view page (the crosstab grid) updated by all the ajax calls -->
+                        <entry key="reportPage" value="adhocCrosstab.json"/>
+
+                        <!--  comma-separated list of javascript files to include -->
+                        <entry key="viewScripts" value="scripts/adhoc.crosstab.js,scripts/adhoc.crosstab.multiselect.js"/>
+
+                        <!--  comma-separated list of stylesheets to include -->
+                        <entry key="viewStylesheets" value="adhoc/stylesheets/menu.css,adhoc/stylesheets/crosstab.css,adhoc/stylesheets/adhoc_treelook.css"/>
+                    </map>
+                </entry>
+                <!-- we are in ad hoc designer -->
+                <entry key="DESIGNER">
+                    <map/>
+                </entry>
+                <!-- we are in ad hoc "presentation mode" (click on the big eye) -->
+                <entry key="PRESENTATION">
+                    <map>
+                        <entry key="mainPage"  value="modules/adhoc/adHocDesignerReportView"/>
+                        <entry key="mainViewName" value="modules/adhoc/adHocDesignerReportView"/>
+                        <entry key="viewStylesheets" value="adhoc/stylesheets/menu.css"/>
+                    </map>
+                </entry>
+                <!-- we are using the view in a dashboard -->
+                <entry key="FOR_DASHBOARD">
+                    <map/>
+                </entry>
+            </map>
+        </property>
+        <!-- safeMemberCount is a limit to how many rows & columns can be in crosstab (unless you override) -->
+        <!--  regular crosstab copies it from state but we set it here -->
+        <property name="safeMemberCount" value="50"/>
+
+        <!-- MDX query status is an enum, and each status value maps to a message key by prepending this value -->
+        <!-- See InteractiveCrosstabEngine.generateViewModel() for more info -->
+        <property name="queryStatusMessagePrefix" value="ADH_263_MDX_QUERY_STATUS_"/>
+    </bean>
+
+    <bean id="adhocDiagnosticSnapshotsService" class="com.jaspersoft.ji.adhoc.AdhocDiagnosticSnapshotsService">
+        <property name="adhocEngineService" ref="adhocEngineService"/>
+        <property name="diagnosticService" ref="diagnosticCollectorService"/>
+        <property name="adhocEasyXMLizer" ref="adhocEasyXMLizer"/>
+        <property name="ehcacheEngineService" ref="ehcacheEngineService"/>
+        <property name="pathTransformer" ref="repositoryPathTransformer"/>
+    </bean>
+
+    <bean id="adhocEngineService" class="com.jaspersoft.ji.adhoc.service.AdhocEngineServiceImpl">
+        <aop:scoped-proxy/>
+
+        <!-- this method is overridden by spring which creates a schemaTemplate bean -->
+        <lookup-method name="createUnifiedState" bean="adhocUnifiedStateTemplate"/>
+
+        <property name="dataStrategyService" ref="dataStrategyService"/>
+
+        <property name="repoOpensDynamicReport" value="true"/>
+
+        <property name="allowDomainTopicAsDataSource" value="false"/>
+
+        <property name="interactiveEngineBeans" ref="interactiveEngineBeans"/>
+
+        <property name="rolesToSeeTempFiles">
+            <list>
+                <value>ROLE_SUPERUSER</value>
+                <value>ROLE_ADMINISTRATOR</value>
+            </list>
+        </property>
+
+        <!-- references to other beans; in normal use these should not be changed -->
+        <property name="pathTransformer" ref="repositoryPathTransformer"/>
+        <property name="auditContext" ref="${bean.auditContext}"/>
+        <property name="repositoryService" ref="easyXMLizedRepository"/>
+        <property name="unsecureRepositoryService" ref="unsecureRepositoryService"/>
+        <property name="objectPermissionService" ref="objectPermissionService"/>
+        <property name="profileAttributeService" ref="profileAttributeService"/>
+        <property name="dataSourceServiceFactories" ref="dataSourceServiceFactories"/>
+        <property name="reportOptionsService" ref="reportOptionsService"/>
+        <property name="compiledReportsCache" ref="mtRepositoryCache"/>
+        <property name="securityContextProvider" ref="${bean.securityContextProvider}"/>
+        <property name="engineService" ref="engineService"/>
+        <property name="queryManipulator" ref="CascadeQueryManipulator"/>
+        <property name="dataSetCache" ref="dataSetCache"/>
+        <property name="treeNodeCacheStore" ref="treeNodeCacheStore"/>
+        <property name="aggregateColumnCacheStore" ref="aggregateColumnCacheStore"/>
+        <property name="adhocHelper" ref="adhocHelper"/>
+        <property name="adhocMetadataFactory" ref="adhocMetadataFactory"/>
+        <property name="transactionManager" ref="transactionManager"/>
+        <property name="slConfig" ref="slConfig"/>
+        <property name="repositoryContextManager" ref="${bean.repositoryContextManager}" />
+        <property name="cacheableCompiledReports" ref="internalCacheableCompiledReports" />
+        <property name="reportJarsProtectionDomainProvider" ref="reportsProtectionDomainProvider"/>
+        <property name="inputControlBuilder" ref="inputControlBuilder" />
+        <property name="adhocEasyXMLizer" ref="adhocEasyXMLizer"/>
+
+
+        <!--  NOTE: if you are looking for tableDefaults, etc., they are in
+            their own beans, and get plugged into the AdhocUnifiedState by Spring
+         -->
+
+        <!-- make sure this line is commented out before checking in / shipping!!!!-->
+        <!--property name="jrxmlDebugPath" value="c:\adhoc.generated.jrxml"/-->
+
+
+        <!-- paths or names for resources used by adhocEngineSevice;
+             in normal use these should not be changed -->
+        <property name="builtInParameterProviders" ref="builtInParameterProviders"/>
+        <property name="reportParameterLabelKeyPrefix" value="net.sf.jasperreports.prompt.label."/>
+        <property name="realmsURI" value="/adhoc/topics"/>
+        <property name="realmsURIParentSQLPatternList">
+            <list>
+                <value><![CDATA[/organizations/%/adhoc/topics%]]></value>
+                <value><![CDATA[/public/adhoc/topics%]]></value>
+            </list>
+        </property>
+        <property name="templateURIParentSQLPatternList">
+            <list>
+                <value><![CDATA[/public/templates]]></value>
+                <value><![CDATA[%/templates]]></value>
+            </list>
+        </property>
+        <property name="themesURI" value="${resource.root}/adhoc/themes"/>
+        <!-- comma-separated list of roles allowed to write to adhoc temp dir
+             users of adhoc must have a role included in this list in order to run -->
+        <property name="adhocRolesAllowed" value="ROLE_USER"/>
+        <property name="ajaxTableURI" value="/adhoc/table.html"/>
+        <property name="ajaxCrosstabURI" value="/adhoc/crosstab.html"/>
+        <property name="ajaxChartURI" value="/adhoc/chart.html"/>
+        <property name="tempFolderName" value="/temp"/>
+        <property name="aruFolder" value="/"/>
+        <property name="actionModelXmlURIStub" value="${resource.root}/adhoc/actionModel"/>
+        <property name="defaultTopicDir" value="/adhoc/topics/"/>
+        <!--<property name="defaultTopic" value="sample1"/>-->
+        <property name="defaultTopic" value="AdhocDemo"/>
+        <property name="addFilterWidgetByDefault" value="false"/>
+        <!-- time in milliseconds Note: this must be a number (recommend not less than 500)-->
+        <property name="adhocFilterAutoSubmitTime" value="500"/>
+        <!--value can either be true or false. False == domain-->
+        <property name="adhocStartTopic" value="true"/>
+
+        <!-- ADHOC CUSTOMIZATION STARTS HERE -->
+
+        <!-- defaultTheme: refers to one of the theme names (see below),
+             which is used as the starting theme; -->
+        <property name="defaultTheme" value="default"/>
+
+        <!-- All available themes. Declare as many as you like -->
+        <!-- You must have rules in dataDisplays.css with a selector matching the key name
+             (e.g. .fall>.color01{background-color: #3B5866;}) -->
+        <!-- You must have a .jrxml file matching the key name in WEB-INF/adhoc/themes (e.g.fall.jrxml) -->
+        <!-- The display property is the i18n key for the display name (or literal string if no match found) -->
+        <property name="themes">
+            <map>
+                <entry key="default">
+                    <map>
+                        <entry key="display" value="ADH_140_THEME_DEFAULT"/>
+                    </map>
+                </entry>
+                <entry key="olive">
+                    <map>
+                        <entry key="display" value="ADH_141_THEME_OLIVE"/>
+                    </map>
+                </entry>
+                <entry key="corporate">
+                    <map>
+                        <entry key="display" value="ADH_142_THEME_CORPORATE"/>
+                    </map>
+                </entry>
+                <entry key="pastel">
+                    <map>
+                        <entry key="display" value="ADH_143_THEME_PASTEL"/>
+                    </map>
+                </entry>
+                <entry key="fall">
+                    <map>
+                        <entry key="display" value="ADH_144_THEME_FALL"/>
+                    </map>
+                </entry>
+                <entry key="professional">
+                    <map>
+                        <entry key="display" value="ADH_145_THEME_PROFESSIONAL"/>
+                    </map>
+                </entry>
+                <entry key="forest">
+                    <map>
+                        <entry key="display" value="ADH_146_THEME_FOREST"/>
+                    </map>
+                </entry>
+                <entry key="slate">
+                    <map>
+                        <entry key="display" value="ADH_147_THEME_SLATE"/>
+                    </map>
+                </entry>
+                <entry key="ocean">
+                    <map>
+                        <entry key="display" value="ADH_148_THEME_OCEAN"/>
+                    </map>
+                </entry>
+
+                <entry key="wine">
+                    <map>
+                        <entry key="display" value="ADH_149_THEME_WINE"/>
+                    </map>
+                </entry>
+            </map>
+        </property>
+
+        <!-- Ajax Controller URL; For a given mode, what is the URL representing the AjaxController class -->
+        <!-- KEY: table, crosstab, chart or dashboard. The suffix reflects the viewer's state (designer or dynamic report) -->
+        <!-- VALUE: the URL, which is the key to lookup the ajax cpntroller class, see WEB-INF\jasperserver-adhoc.xml -->
+
+
+        <property name="ajaxControllerURLs">
+            <map>
+                <entry key="table_designer" value="table.html"/>
+                <entry key="crosstab_designer" value="crosstab.html"/>
+                <entry key="chart_designer" value="chart.html"/>
+                <entry key="ichart_designer" value="intelligentChart.html"/>
+                <entry key="table" value="table.html"/>
+                <entry key="crosstab" value="crosstab.html"/>
+                <entry key="chart" value="chart.html"/>
+                <entry key="ichart" value="intelligentChart.html"/>
+                <entry key="dashboard" value="dashboard.html"/>
+            </map>
+        </property>
+
+        <!-- Main Pages: For a given mode, what is the path to the main jsp -->
+        <!-- KEY: table, crosstab, chart or dashboard. The suffix reflects the viewer's state (designer or dynamic report) -->
+        <!-- VALUE: the path to the jsp, relative to WEB-INF/jsp directory  -->
+
+        <property name="mainPages">
+            <map>
+                <entry key="table_designer" value="modules/adhoc/adHocDesigner"/>
+                <entry key="crosstab_designer" value="modules/adhoc/adHocDesigner"/>
+                <entry key="chart_designer" value="modules/adhoc/adHocDesigner"/>
+                <entry key="ichart_designer" value="modules/adhoc/adHocDesigner"/>
+                <entry key="olap_ichart_designer" value="modules/adhoc/adHocDesigner"/>
+                <entry key="table" value="modules/adhoc/adHocDesignerReportView"/>
+                <entry key="crosstab" value="modules/adhoc/adHocDesignerReportView"/>
+                <entry key="chart" value="modules/adhoc/adHocDesignerReportView"/>
+                <entry key="ichart" value="modules/adhoc/adHocDesignerReportView"/>
+                <entry key="olap_ichart" value="modules/adhoc/adHocDesignerReportView"/>
+                <entry key="dashboard" value="modules/dashboard/dashboardDesigner"/>
+            </map>
+        </property>
+
+        <!-- Dynamic Content Pages: For a given mode, what is the path to the dynamically generated jsp -->
+        <!-- KEY: table, crosstab, chart or dashboard as defined in AdhocAjaxController.java  -->
+        <!-- VALUE: the path to the jsp, relative to WEB-INF/jsp directory  -->
+        <property name="dynamicContentPages">
+            <map>
+                <entry key="tableReport" value="adhocTable.json"/>
+                <entry key="crosstabReport" value="adhocCrosstab.json"/>
+                <entry key="chartReport" value="adhocChart.json"/>
+                <entry key="intelligentChartReport" value="adhocIntelligentChart.json"/>
+                <entry key="chartConstantState" value="modules/adhoc/chartConstantState"/>
+                <entry key="dashboardControls" value="modules/dashboard/dashboardDesignerControlRenderer"/>
+                <entry key="dashboardState" value="modules/dashboard/dashboardDesignerState"/>
+                <!-- this one is for fetching subsequent"pages" of a table for a large dataset -->
+                <entry key="tableRows" value="adhocTable.json"/>
+            </map>
+        </property>
+
+        <!-- viewScripts: specialist javascript files that we need in addition to generic adhoc js library.
+            If more than one file is required for a context declare using comma separation (see chart)-->
+        <!-- KEY: table, crosstab, chart or dashboard. The suffix reflects the viewer's state (designer or dynamic report) -->
+        <!-- VALUE: the path(s) to the js file or files, relative to the webapp directory  -->
+        <property name="viewScripts">
+            <map>
+                <entry key="table_designer" value=""/>
+                <entry key="crosstab_designer" value="scripts/adhoc.crosstab.js,scripts/adhoc.crosstab.multiselect.js"/>
+                <entry key="chart_designer" value="scripts/adhoc.chart.js"/>
+                <entry key="ichart_designer" value=""/>
+                <entry key="table" value=""/>
+                <entry key="crosstab" value="scripts/adhoc.crosstab.js,scripts/adhoc.crosstab.multiselect.js"/>
+                <entry key="chart" value="scripts/adhoc.chart.js"/>
+                <entry key="ichart" value=""/>
+                <entry key="dashboard" value="scripts/dashboard.designer.js"/>
+            </map>
+        </property>
+
+        <!-- adhocStylesheets: specialized stylesheets required for this view
+            If more than one file is required for a context declare using comma separation-->
+        <!-- KEY: table, crosstab, chart or dashboard. The suffix reflects the viewer's state (designer or dynamic report) -->
+        <!-- VALUE: the path(s) to the css file or files, relative to the webapp directory  -->
+
+        <property name="viewStylesheets">
+            <map>
+                <entry key="table_designer" value="adhoc/stylesheets/menu.css,adhoc/stylesheets/adhoc_treelook.css"/>
+                <entry key="crosstab_designer" value="adhoc/stylesheets/menu.css,adhoc/stylesheets/crosstab.css,adhoc/stylesheets/adhoc_treelook.css"/>
+                <entry key="chart_designer" value="adhoc/stylesheets/menu.css,adhoc/stylesheets/adhoc_treelook.css"/>
+                <entry key="ichart_designer" value=""/>
+                <entry key="table" value="adhoc/stylesheets/menu.css"/>
+                <entry key="crosstab" value="adhoc/stylesheets/menu.css"/>
+                <entry key="chart" value="adhoc/stylesheets/menu.css"/>
+                <entry key="ichart" value=""/>
+                <entry key="dashboard" value="adhoc/stylesheets/menu.css"/>
+            </map>
+        </property>
+
+        <!-- reportGenerators: beans specialized in generating JRXML from adhoc state -->
+        <!-- KEY: the name of the report generator, as specified in the adhoc report template selection UI -->
+        <!-- VALUE: a bean implementing the AdhocReportGenerator interface  -->
+
+        <property name="reportGeneratorFactory" ref="reportGeneratorFactory"/>
+        <property name="reportGenerator" ref="customTemplateReportGenerator"/>
+        <property name="drillThroughReportGenerator" ref="drillThroughReportGenerator"/>
+
+        <!-- ADHOC CUSTOMIZATION ENDS HERE -->
+
+        <!-- map JR errors thrown while filling to specific message id's -->
+        <property name="jrErrorMap">
+            <map>
+                <entry key="Cannot shrink cell contents" value="jsexception.adhoc.crosstab.too.complex"/>
+                <entry key="Not enough space to render the crosstab" value="jsexception.adhoc.crosstab.too.complex"/>
+                <entry key="Crosstab bucket/measure limit" value="jsexception.viewable.data.limit.exceeded"/>
+            </map>
+        </property>
+
+        <!-- register custom types with Ad Hoc
+             this will do various things, but we'll start by allowing a different editor to launch in place of Ad Hoc
+             See the bean updater below for how to modify
+          -->
+        <property name="customAdhocTypes">
+            <map/>
+        </property>
+
+        <!-- set up a query interceptor that will tell MySQL connections not to cache the result set -->
+        <property name="queryInterceptor">
+            <bean class="com.jaspersoft.commons.datarator.jr.MySQLStreamer"/>
+        </property>
+
+
+        <!--
+            The categorizer factory allows configuration of the ways in which crosstab groups can be categorized.
+            The supported types are broken into three "supertypes": String, Numeric, and Date
+            (this breakdown is hardcoded in the TypeMapper...config could be springified but there isn't much need yet)
+            Each supertype has at least one categorizer. If there are more than one, one is marked as the default.
+            Common properties:
+                name: used in API to set a particular categorizer
+                label: a reference to a string in adhoc_messages.properties for screen display
+                default: is this the default categorizer?
+            Additional properties used by individual categorizer impls can also be set here.
+
+        -->
+        <property name="categorizerFactory" ref="categorizerFactory"/>
+        <property name="alwaysPromptInputControls" value="false" />
+
+        <!-- class that determines the filter expression when filtering is added for a field
+             default is to return "isAnyValue(field)", but in case of string fields, we will
+            do "startsWith(field, '')" if the number of values is under maxStringValues
+            -->
+        <property name="defaultFilterConstructor">
+            <bean class="com.jaspersoft.ji.adhoc.service.EqualsFilterConstructor">
+                <property name="maxStringValues" value="250"/>
+                <property name="filterTemplate" value="startsWith(_field_, '')"/>
+            </bean>
+        </property>
+        <property name="JSPPath" value="modules/adhoc/"/>
+        <property name="dashboardDefaults" ref="dashboardDefaults"/>
+        <property name="exportFormatLabels" ref="exportFormatLabels"/>
+        <property name="iPadExportFormatLabels" ref="iPadExportFormatLabels"/>
+        <property name="inputControlsInfoExtractor" ref="inputControlsInfoRoutingExtractor"/>
+        <property name="dataCacheProvider" ref="engineServiceDataCacheProvider"/>
+        <property name="recoverTransactionAttemptNumber" value="10"/>
+        <property name="expressionEvaluatorBeanName" value="fieldResolvingExpressionEvaluator"/>
+        <property name="dataColumnFactory" ref="dataColumnFactory"/>
+    </bean>
+
+    <bean id="adhocHelper" class="com.jaspersoft.ji.adhoc.AdhocHelperImpl">
+    </bean>
+
+    <!-- bean to register a JRQueryExecuterFactory and provide a singleton it can use
+         for getting Spring-configured properties
+         This is the datarator QEF but you could use this to register any QEF
+    <bean class="com.jaspersoft.ji.adhoc.util.QEFactorySupport" lazy-init="false">
+        <property name="queryLanguage" value="datarator"/>
+        <property name="factoryClassName" value="com.jaspersoft.commons.datarator.jr.DataratorQueryExecuterFactory"/>
+        <property name="universal" value="true"/>
+        <property name="motherOfAllDataSources" ref="dataSourceServiceFactories"/>
+        <property name="properties">
+            <map>
+                <entry key="dataSetCache" value-ref="dataSetCache"/>
+            </map>
+        </property>
+    </bean>
+      -->
+
+    <!-- this alias is a bean name which is referenced by ManagementService, the web services implementation.
+         If it's present, ManagementService uses it to run reports. This makes it possible for Pro to run
+         Ad Hoc reports correctly.
+      -->
+    <alias name="adhocEngineService" alias="runReportEngineService"/>
+
+    <bean id="setCustomAdhocProps" class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdaterDefinition">
+        <property name="order" value="10"/>
+        <property name="beanName" value="adhocEngineService"/>
+        <property name="propertyName" value="customAdhocTypes"/>
+        <property name="operation" value="append"/>
+    </bean>
+
+
+    <!--
+    updater which sets the debug path for adhoc generator
+    -->
+    <bean id="setDebugPath" class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdaterDefinition">
+        <property name="order" value="10"/>
+        <property name="beanName" value="adhocEngineService"/>
+        <property name="propertyName" value="jrxmlDebugPath"/>
+        <property name="operation" value="set"/>
+    </bean>
+
+    <bean class="com.jaspersoft.ji.adhoc.service.InputControlsInfoAdhocExtractor">
+        <property name="routingExtractor" ref="inputControlsInfoRoutingExtractor"/>
+        <property name="reportLoadingService" ref="${bean.reportLoadingService}"/>
+        <property name="adhocEngine" ref="adhocEngineService"/>
+        <property name="repository" ref="${bean.repositoryService}"/>
+    </bean>
+
+    <util:map id="exportFormatLabels">
+        <!-- TODO consider using common configuration with viewReportBeans.xml. Can't be done immediately because of dependencis to beans from ViewReport flow -->
+        <entry key="pdf" value="jasper.report.view.hint.export.pdf"/>
+        <entry key="xls" value="jasper.report.view.hint.export.excel"/>
+        <entry key="xlsNoPag" value="jasper.report.view.hint.export.excel.nopag"/>
+        <entry key="csv" value="jasper.report.view.hint.export.csv"/>
+        <entry key="docx" value="jasper.report.view.hint.export.docx"/>
+        <entry key="rtf" value="jasper.report.view.hint.export.rtf"/>
+        <entry key="odt" value="jasper.report.view.hint.export.odt"/>
+        <entry key="ods" value="jasper.report.view.hint.export.ods"/>
+        <entry key="xlsx" value="jasper.report.view.hint.export.xlsx"/>
+        <entry key="xlsxNoPag" value="jasper.report.view.hint.export.xlsx.nopag"/>
+        <entry key="pptx" value="jasper.report.view.hint.export.pptx"/>
+    </util:map>
+
+    <util:map id="iPadExportFormatLabels">
+        <entry key="pdf" value="jasper.report.view.hint.export.pdf"/>
+        <entry key="xls" value="jasper.report.view.hint.export.excel"/>
+        <entry key="xlsNoPag" value="jasper.report.view.hint.export.excel.nopag"/>
+        <entry key="csv" value="jasper.report.view.hint.export.csv"/>
+    </util:map>
+
+    <bean name="jasperReportsProContext" class="net.sf.jasperreports.engine.SimpleJasperReportsContext">
+        <property name="parent" ref="jasperReportsContext" />
+        <property name="extensions">
+            <map>
+                <entry key="com.jaspersoft.jasperreports.highcharts.charts.settings.ChartSettingServiceBundle">
+                    <list>
+                        <ref bean="adhocHighchartsSettingServiceBundle"/>
+                    </list>
+                </entry>
+                <entry key="com.jaspersoft.jasperreports.highcharts.charts.actions.ChartTypeValidator">
+                    <list>
+                        <ref bean="adhocChartTypeValidator"/>
+                    </list>
+                </entry>
+                <entry key="net.sf.jasperreports.engine.util.MessageProviderFactory">
+                    <list>
+                        <ref bean="highchartsMessageProviderFactory"/>
+                    </list>
+                </entry>
+                <entry key="net.sf.jasperreports.web.util.JacksonMapping">
+                    <list>
+                        <bean class="net.sf.jasperreports.web.util.JacksonMapping">
+                            <constructor-arg value="saveReport" index="0"/>
+                            <constructor-arg value="com.jaspersoft.ji.remote.report.SaveReportAction" index="1"/>
+                        </bean>
+                    </list>
+                </entry>
+            </map>
+        </property>
+    </bean>
+
+    <bean id="highchartsMessageProviderFactory" class="com.jaspersoft.jasperserver.api.engine.jasperreports.util.MessageSourceMessageProviderFactory">
+        <property name="messageSource">
+            <ref bean="messageSource"/>
+        </property>
+        <property name="baseNames">
+            <set>
+                <value>jasperreports_highcharts_messages</value>
+            </set>
+        </property>
+        <property name="codeMapper">
+            <bean class="com.jaspersoft.jasperserver.api.engine.jasperreports.util.MessageProviderCodePropertiesMapper">
+                <property name="properties">
+                    <util:properties location="${resource.root}/internal/jasperreports_highcharts_messages.mapping.properties"/>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="jasperReportsProSchedulerContext" class="net.sf.jasperreports.engine.SimpleJasperReportsContext">
+        <property name="parent" ref="${bean.jasperReportsContext}"/>
+        <property name="propertiesMap">
+            <props>
+                <prop key="com.jaspersoft.jasperreports.highcharts.generate.image">true</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="jasperReportsProWSContext" class="net.sf.jasperreports.engine.SimpleJasperReportsContext">
+        <property name="parent" ref="${bean.jasperReportsContext}"/>
+        <property name="propertiesMap">
+            <props>
+                <prop key="com.jaspersoft.jasperreports.highcharts.generate.image">true</prop>
+            </props>
+        </property>
+    </bean>
+
+    <bean id="adhocHighchartsSettingServiceBundle" class="com.jaspersoft.ji.adhoc.jr.AdhocHighchartsSettingServiceBundle">
+        <property name="ownerContext" ref="jasperReportsProContext"/>
+        <property name="settingService">
+            <bean class="com.jaspersoft.ji.adhoc.jr.AdhocHighchartsSettingService">
+                <property name="messageSource" ref="messageSource" />
+                <property name="includeMessageKeysAs">
+                    <map>
+                        <entry key="totalsLabelForChart" value="ADH_231_TOTALS" />
+                        <entry key="allLabelForChart" value="ADH_231_ALL" />
+                    </map>
+                </property>
+                <property name="scriptResources">
+                    <map>
+                        <entry key="com.jaspersoft.ji.adhoc.highcharts.setting.service.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="com/jaspersoft/ji/adhoc/jr/require/adhocHighchartsSettingService.js"/>
+                                <property name="classpathResource" value="true"/>
+                                <property name="moduleName" value="adhocHighchartsSettingService"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.underscore.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/lodash.custom/dist/lodash.custom.js"/>
+                                <property name="moduleName" value="underscore"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.xssutil.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/js-sdk/src/common/util/xssUtil.js"/>
+                                <property name="moduleName" value="xssUtil"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.jrs.configs.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/jrs.configs.js"/>
+                                <property name="moduleName" value="jrs.configs"/>
+                            </bean>
+                        </entry>
+
+                        <entry key="com.jaspersoft.ji.adhoc.grouped.categories.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/highcharts-pack/highcharts/grouped-categories.js"/>
+                                <property name="moduleName" value="highcharts-grouped-categories"/>
+                                <property name="shimExports" value="Highcharts"/>
+                                <property name="shimDeps">
+                                    <list>
+                                        <value>underscore</value>
+                                    </list>
+                                </property>
+                            </bean>
+                        </entry>
+
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.ext.multiplePieTitlesExt.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/ext/multiplePieTitlesExt.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/ext/multiplePieTitlesExt"/>
+                            </bean>
+                        </entry>
+
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.ext.escapeUtilsExt.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/ext/escapeUtilsExt.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/ext/escapeUtilsExt"/>
+                            </bean>
+                        </entry>
+
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.palette.defaultPalette.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/palette/defaultPalette.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/palette/defaultPalette"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.enum.dateTimeFormats.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/enum/dateTimeFormats.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/enum/dateTimeFormats"/>
+                            </bean>
+                        </entry>
+
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.enum.adhocToHighchartsTypes.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/enum/adhocToHighchartsTypes.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/enum/adhocToHighchartsTypes"/>
+                            </bean>
+                        </entry>
+
+
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.adhocDataProcessor.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/adhocDataProcessor.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/adhocDataProcessor"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.highchartsDataMapper.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/highchartsDataMapper.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/highchartsDataMapper"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.adhocToHighchartsAdapter.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.highchart.wrapper.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/bi-adhoc/src/adhoc/api/chart/adhocToHighchartsAdapter/Highcharts.js"/>
+                                <property name="moduleName" value="adhoc/api/chart/adhocToHighchartsAdapter/Highcharts"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.json3.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="scripts/bower_components/json3/lib/json3.js"/>
+                                <property name="moduleName" value="json3"/>
+                            </bean>
+                        </entry>
+                        <entry key="com.jaspersoft.ji.adhoc.bundle.js">
+                            <bean class="com.jaspersoft.jasperreports.highcharts.charts.render.RequirejsScriptResource">
+                                <property name="resourceLocation" value="com/jaspersoft/ji/adhoc/jr/require/bundle.js"/>
+                                <property name="classpathResource" value="true"/>
+                                <property name="moduleName" value="bundle"/>
+                            </bean>
+                        </entry>
+                    </map>
+                </property>
+            </bean>
+        </property>
+        <property name="fillInterceptor">
+            <bean class="com.jaspersoft.ji.adhoc.jr.AdhocHighchartsSettingFillInterceptor">
+            </bean>
+        </property>
+    </bean>
+
+
+    <bean id="drillThroughReportGenerator" class="com.jaspersoft.ji.adhoc.service.SimpleDrillThroughReportGenerator">
+        <property name="template" value="${resource.root}/adhoc/themes/drill-through.620.jrxml"/>
+    </bean>
+
+    <bean id="actualSizeReportGenerator" class="com.jaspersoft.ji.adhoc.service.SimpleReportGenerator">
+        <property name="id" value="actual-size"/>
+        <property name="template" value="/public/templates/actual_size.620.jrxml"/>
+        <property name="crosstabReportBuilderName">
+            <idref bean="defaultCrosstabReportBuilder"/>
+        </property>
+    </bean>
+
+    <bean id="defaultCrosstabReportBuilder" scope="prototype" class="com.jaspersoft.ji.adhoc.service.CrosstabReportBuilder">
+        <property name="createColumnCrosstabHeaders" value="false"/>
+    </bean>
+
+    <bean id="letterPortraitReportGenerator" class="com.jaspersoft.ji.adhoc.service.SimpleReportGenerator">
+        <property name="id" value="letter-portrait"/>
+        <property name="template" value="/public/templates/letter_portrait.620.jrxml"/>
+    </bean>
+
+    <bean id="letterLandscapeReportGenerator" class="com.jaspersoft.ji.adhoc.service.SimpleReportGenerator">
+        <property name="id" value="letter-landscape"/>
+        <property name="template" value="/public/templates/letter_landscape.620.jrxml"/>
+    </bean>
+
+    <bean id="a4PortraitReportGenerator" class="com.jaspersoft.ji.adhoc.service.SimpleReportGenerator">
+        <property name="id" value="a4-portrait"/>
+        <property name="template" value="/public/templates/a4_portrait.620.jrxml"/>
+    </bean>
+
+    <bean id="a4LandscapeReportGenerator" class="com.jaspersoft.ji.adhoc.service.SimpleReportGenerator">
+        <property name="id" value="a4-landscape"/>
+        <property name="template" value="/public/templates/a4_landscape.620.jrxml"/>
+    </bean>
+
+    <util:constant id="locationPropertyType" static-field="com.jaspersoft.ji.metadata.ReportGeneratorProperty.Type.LOCATION" />
+    <util:constant id="locationProperty" static-field="com.jaspersoft.ji.adhoc.service.CustomTemplateReportGenerator.REPORT_TEMPLATE_PATH" />
+
+    <util:map id="reportGeneratorDefaultConf">
+        <entry key="templatesFolderUri" value="/public/templates"/>
+        <entry key="defaultTemplateUri" value="/public/templates/actual_size.620.jrxml"/>
+        <entry key="publicFolderUri" value="#{configurationBean.publicFolderUri}"/>
+    </util:map>
+
+    <bean id="customTemplateReportGenerator" class="com.jaspersoft.ji.adhoc.service.CustomTemplateReportGenerator">
+        <property name="id" value="custom-template"/>
+        <property name="template" value="#{reportGeneratorDefaultConf.defaultTemplateUri}"/>
+        <property name="crosstabReportBuilderName">
+            <idref bean="defaultCrosstabReportBuilder"/>
+        </property>
+    </bean>
+
+    <bean id="reportGeneratorFactory" class="com.jaspersoft.ji.adhoc.service.ReportGeneratorFactoryImpl">
+        <property name="reportGenerators">
+            <list>
+                <!--<ref bean="actualSizeReportGenerator" />-->
+                <!--<ref bean="letterPortraitReportGenerator" />-->
+                <!--<ref bean="letterLandscapeReportGenerator" />-->
+                <!--<ref bean="a4PortraitReportGenerator" />-->
+                <!--<ref bean="a4LandscapeReportGenerator" />-->
+            </list>
+        </property>
+    </bean>
+
+    <bean id="adhocMonitor" class="com.jaspersoft.ji.adhoc.action.AdhocMonitorHolder">
+        <property name="engine" ref="adhocEngineService"/>
+    </bean>
+
+    <bean id="requestMonitorList" class="java.util.ArrayList">
+        <constructor-arg index="0" type="java.util.Collection">
+            <list>
+                <ref bean="adhocMonitor"/>
+            </list>
+        </constructor-arg>
+    </bean>
+
+	<util:list id="proEngineServiceDataParameterContributors">
+		<ref bean="reportInputDataParameterContributors"/>
+		<ref bean="adhocReportDataParameterContributor"/>
+	</util:list>
+
+	<bean name="adhocReportDataParameterContributor" class="com.jaspersoft.ji.adhoc.service.AdhocReportDataParameterContributor">
+	</bean>
+
+	<bean id="adhocChartTypeNotRenderableUIExceptionProcessor" class="com.jaspersoft.ji.adhoc.util.AdhocChartTypeNotRenderableUIExceptionProcessor">
+		<property name="typeMessages" ref="adhocChartTypeNotRenderableMessages"/>
+	</bean>
+
+	<bean id="adhocChartTypeNotRenderableMessages" class="com.jaspersoft.ji.adhoc.util.AdhocChartTypeNotRenderableMessages">
+		<property name="chartTypeMessages">
+			<map>
+				<entry key="line_time_series" value="ADH_1214_ICHARTS_NO_TIME_SERIES_DATA"/>
+				<entry key="spline_time_series" value="ADH_1214_ICHARTS_NO_TIME_SERIES_DATA"/>
+				<entry key="area_time_series" value="ADH_1214_ICHARTS_NO_TIME_SERIES_DATA"/>
+				<entry key="spline_area_time_series" value="ADH_1214_ICHARTS_NO_TIME_SERIES_DATA"/>
+				<entry key="column_line" value="ADH_1214_ICHARTS_NO_DATA_COLUMN_LINE"/>
+				<entry key="column_spline" value="ADH_1214_ICHARTS_NO_DATA_COLUMN_SPLINE"/>
+				<entry key="stacked_column_line" value="ADH_1214_ICHARTS_NO_DATA_STACKED_COLUMN_LINE"/>
+				<entry key="stacked_column_spline" value="ADH_1214_ICHARTS_NO_DATA_STACKED_COLUMN_SPLINE"/>
+				<entry key="multi_axis_line" value="ADH_1214_ICHARTS_NO_DATA_MULTI_AXIS_LINE"/>
+				<entry key="multi_axis_spline" value="ADH_1214_ICHARTS_NO_DATA_MULTI_AXIS_SPLINE"/>
+				<entry key="multi_axis_column" value="ADH_1214_ICHARTS_NO_DATA_MULTI_AXIS_COLUMN"/>
+				<entry key="scatter" value="ADH_1214_ICHARTS_NO_DATA_SCATTER"/>
+				<entry key="bubble" value="ADH_1214_ICHARTS_NO_DATA_BUBBLE"/>
+				<entry key="dual_level_pie" value="ADH_1214_ICHARTS_NO_DATA_DUAL_LEVEL_PIE"/>
+                <entry key="heat_map_non_olap" value="ADH_1214_ICHARTS_NO_DATA_HEAT_MAP_NON_OLAP"/>
+                <entry key="heat_map_olap" value="ADH_1214_ICHARTS_NO_DATA_HEAT_MAP_OLAP"/>
+                <entry key="heat_map_time_series" value="ADH_1214_ICHARTS_NO_DATA_TIME_SERIES_HEAT_MAP"/>
+				<entry key="dual_measure_tree_map" value="ADH_1214_ICHARTS_NO_DATA_DUAL_MEASURE_TREE_MAP"/>
+				<entry key="tree_map" value="ADH_1214_ICHARTS_NO_DATA_TREE_MAP"/>
+				<entry key="one_parent_tree_map" value="ADH_1214_ICHARTS_NO_DATA_ONE_PARENT_TREE_MAP"/>
+                <entry key="speedometer" value="ADH_1214_ICHARTS_NO_DATA_SPEEDOMETER"/>
+                <entry key="arc_gauge" value="ADH_1214_ICHARTS_NO_DATA_GAUGE"/>
+			</map>
+		</property>
+	</bean>
+
+	<bean id="adhocChartTypeValidator" class="com.jaspersoft.ji.adhoc.jr.AdhocChartTypeValidator">
+		<property name="repository" ref="${bean.repositoryService}"/>
+		<property name="typeMessages" ref="adhocChartTypeNotRenderableMessages"/>
+	</bean>
+
+
+    <bean id="excludedResourcesFromAttrResolvingPro" parent="excludedResourcesFromAttrResolvingCe" class="java.util.HashSet">
+        <constructor-arg index="0" type="java.util.Collection">
+            <set merge="true">
+                <value>com.jaspersoft.ji.adhoc.AdhocDataViewImpl</value>
+            </set>
+        </constructor-arg>
+    </bean>
+
+    <bean id="appExpressionEvaluator"
+          parent="fieldResolvingExpressionEvaluator"
+          class="com.jaspersoft.ji.adhoc_engine.query.AppExpressionEvaluator"
+          scope="prototype" />
+
+    <!-- Cache for for QueryExecutorService -->
+    <bean id="queryExecutorEngineCache" class="org.springframework.cache.ehcache.EhCacheFactoryBean"
+          lazy-init="true">
+        <property name="cacheManager" ref="queryExecutorEngineCacheManager"/>
+        <property name="cacheName" value="queryExecutorCache" />
+    </bean>
+
+    <bean id="queryExecutorEngineCacheManager" class="org.springframework.cache.ehcache.EhCacheManagerFactoryBean" depends-on="sysProperties">
+        <property name="configLocation">
+            <value>${resource.root}/query-executor-ehcache.xml</value>
+        </property>
+    </bean>
+
+    <bean id="queryExecutorEhcacheEngineService" class="com.jaspersoft.jasperserver.api.engine.jasperreports.service.impl.EhcacheEngineService">
+        <property name="engineService" ref="engineService"/>
+        <property name="cache" ref="queryExecutorEngineCache"/>
+        <property name="diagnosticCache" ref="queryExecutorEngineCache"/>
+    </bean>
+</beans>

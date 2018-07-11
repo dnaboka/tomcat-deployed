@@ -1,0 +1,1 @@
+define({root:{id:"root",uri:"rest_v2/hypermedia/root"},resources:{id:"resources",uri:"rest_v2/hypermedia/resources",extraRequestOptions:{cache:!1}},workflows:{id:"workflows",uri:"rest_v2/hypermedia/workflows",rel:"workflow"},contentReferences:{id:"contentReferences",uri:"rest_v2/hypermedia/contentReferences"}});

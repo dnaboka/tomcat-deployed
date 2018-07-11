@@ -1,0 +1,1 @@
+define({TIMESTAMP:"Timestamp",DATE:"Date",TIME:"Time",INTEGER:"Integer",DECIMAL:"Decimal",LONG:"Long",NUMERIC:"Numeric",STRING:"String",BOOLEAN:"Boolean",READ_ONLY:"readonly"});

@@ -1,0 +1,1 @@
+define(["require","backbone","../model/ConditionModel"],function(e){var n=e("backbone"),o=e("../model/ConditionModel");return n.Collection.extend({model:o,initialize:function(e,n){n||(n={}),this.dataType=n.dataType}})});

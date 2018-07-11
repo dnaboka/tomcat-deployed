@@ -1,0 +1,1 @@
+define(["require","backbone","../model/DashboardResourceModel"],function(e){"use strict";var o=e("backbone"),r=e("../model/DashboardResourceModel");return o.Collection.extend({model:r})});

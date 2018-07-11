@@ -1,0 +1,1 @@
+define({EXECUTION:"execution",READY:"ready",CANCELLED:"cancelled",FAILED:"failed",QUEUED:"queued"});

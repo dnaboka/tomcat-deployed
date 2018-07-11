@@ -1,0 +1,1 @@
+!function(t){"use strict";"function"==typeof define&&define.amd?define(["highcharts","xssUtil"],t):t(Highcharts,xssUtil)}(function(t,e){"use strict";return t.wrap(t,"escapeXSS",function(t,s){return t.apply(this,[e.escape(s,{softHTMLEscape:!0})])}),t});

@@ -1,0 +1,97 @@
+<div class="section first">
+    <span class="title">{{- i18n["dashboard.dialog.properties.canvas.settings"]}}</span>
+
+    <div class="group">
+
+        <label class="control canvasColorControl">
+            <span>{{- i18n["dashboard.dialog.properties.canvas.background.color"]}}</span>
+            <div class="buttonColorpicker"
+                 data-bind="colorpicker:canvasColor">
+                <div class="buttonColorpicker-swatch colorIndicator"></div>
+                <div class="buttonColorpicker-trigger">
+                    <span class="buttonColorpicker-trigger-icon"></span>
+                </div>
+            </div>
+        </label>
+
+        <label class="control text fixedCanvasControl">
+            <input name="useFixedSize" data-bind="checked:useFixedSize" type="checkbox"/>
+            <span class="wrap">{{-i18n["dashboard.dialog.properties.fixed.size"]}}</span>
+            <input name="fixedWidth" data-bind="value:integer(fixedWidth),attr:{disabled:not(useFixedSize)}" type="text"/>
+            {{-i18n["dashboard.dialog.properties.fixed.size.by"]}}
+            <input name="fixedWidth" data-bind="value:integer(fixedHeight),attr:{disabled:not(useFixedSize)}" type="text"/>
+
+            <span data-bind="validationErrorClass:fixedWidth">
+                <span class="message warning" data-bind="validationErrorText:fixedWidth"></span>
+            </span>
+             <span data-bind="validationErrorClass:fixedHeight">
+                 <span class="message warning" data-bind="validationErrorText:fixedHeight"></span>
+             </span>
+        </label>
+    </div>
+</div>
+
+<div class="section">
+    <span class="title">{{- i18n["dashboard.dialog.properties.dashlet.settings"]}}</span>
+
+    <div class="group">
+        <label class="control checkBox">
+            <span class="wrap">{{-i18n["dashboard.dialog.properties.dashlet.filter.show.popup"]}}</span>
+            <input name="dashletFilterShowPopup" data-bind="checked:dashletFilterShowPopup" type="checkbox"/>
+            <span class="message warning"></span>
+        </label>
+
+        <label class="control checkBox">
+            <span class="wrap">{{-i18n["dashboard.dialog.properties.dashlet.borders"]}}</span>
+            <input name="showDashletBorders" data-bind="checked:showDashletBorders" type="checkbox"/>
+            <span class="message warning"></span>
+        </label>
+
+        <label class="control text" data-bind="validationErrorClass:dashletMargin">
+            <span class="wrap">{{-i18n["dashboard.dialog.properties.dashlet.margin"]}}</span>
+            <input name="dashletMargin" data-bind="value:integer(dashletMargin)" type="text"/>
+            <span class="message warning" data-bind="validationErrorText:dashletMargin"></span>
+        </label>
+
+        <label class="control text" data-bind="validationErrorClass:dashletPadding">
+            <span class="wrap">{{-i18n["dashboard.dialog.properties.dashlet.padding"]}}</span>
+            <input name="dashletPadding" data-bind="value:integer(dashletPadding)" type="text"/>
+            <span class="message warning" data-bind="validationErrorText:dashletPadding"></span>
+        </label>
+
+        <label class="control titleTextColorControl">
+            <span>{{- i18n["dashboard.dialog.properties.dashlet.title.text.color"]}}</span>
+            <div class="buttonColorpicker"
+                 data-bind="colorpicker:titleTextColor">
+                <div class="buttonColorpicker-swatch colorIndicator"></div>
+                <div class="buttonColorpicker-trigger">
+                    <span class="buttonColorpicker-trigger-icon"></span>
+                </div>
+            </div>
+        </label>
+
+        <label class="control titleBarColorControl">
+            <span>{{- i18n["dashboard.dialog.properties.dashlet.title.bar.color"]}}</span>
+            <div class="buttonColorpicker"
+                 data-bind="colorpicker:titleBarColor"
+                 data-show-transparent-input="true">
+                <div class="buttonColorpicker-swatch colorIndicator"></div>
+                <div class="buttonColorpicker-trigger">
+                    <span class="buttonColorpicker-trigger-icon"></span>
+                </div>
+            </div>
+        </label>
+    </div>
+</div>
+
+<div class="section">
+    <span class="title">{{- i18n["dashboard.dialog.properties.toolbar.settings"]}}</span>
+
+    <div class="group">
+        <label class="control checkBox">
+            <span class="wrap">{{-i18n["dashboard.dialog.properties.export.button"]}}</span>
+            <input name="showExportButton" data-bind="checked:showExportButton" type="checkbox"/>
+            <span class="message warning"></span>
+        </label>
+    </div>
+</div>

@@ -1,0 +1,92 @@
+{
+  "type": "object",
+  "properties": {
+    "server": {
+      "type": "string",
+      "description": "Url to JRS instance."
+    },
+    "resource": {
+      "type": "string",
+      "description": "Report resource URI.",
+      "pattern": "^/[^/~!#\\$%^|\\s`@&*()\\-+={}\\[\\]:;\"'<>,?/\\|\\\\]+(/[^/~!#\\$%|\\s`@&*()+={}\\[\\]:;\"'<>,?/\\|\\\\]+)*$"
+    },
+    "container": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": true,
+          "description": "DOM element to render report to"
+        },
+        {
+          "type": "string",
+          "description": "CSS selector for container to render report to."
+        }
+      ]
+    },
+    "autoresize": {
+      "type": "boolean",
+      "description": "Automatically resize Ad Hoc View on browser window resize",
+      "default": true
+    },
+    "canvas": {
+      "type": "object",
+      "properties": {
+        "type" :{
+          "description": "Type of visualization",
+          "enum": [
+            "Table", "Crosstab", "Bar", "Column", "Line", "Area", "Spline",
+            "AreaSpline", "StackedBar", "StackedColumn", "StackedLine", "StackedArea",
+            "StackedSpline", "StackedAreaSpline", "StackedPercentBar", "StackedPercentColumn", "StackedPercentLine",
+            "StackedPercentArea", "StackedPercentSpline", "StackedPercentAreaSpline", "Pie",
+            "DualLevelPie", "TimeSeriesLine", "TimeSeriesArea", "TimeSeriesSpline",
+            "TimeSeriesAreaSpline", "ColumnLine", "ColumnSpline", "StackedColumnLine",
+            "StackedColumnSpline", "MultiAxisLine", "MultiAxisSpline", "MultiAxisColumn",
+            "Scatter", "Bubble", "SpiderColumn", "SpiderLine", "SpiderArea","HeatMap", "TimeSeriesHeatMap",
+            "SemiPie", "DualMeasureTreeMap", "TreeMap", "OneParentTreeMap"
+          ]
+        },
+        "chart": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "Properties of Ad Hoc View's chart",
+          "properties": {}
+        }
+      }
+    },
+    "linkOptions": {
+      "type": "object",
+      "description": "AdHocView's parameters values",
+      "properties": {
+        "beforeRender": {
+          "type": "function",
+          "description": "A function to process link - link element pairs."
+        },
+        "events": {
+          "type": "object",
+          "description": "Backbone-like events object to be applied to JR links",
+          "additionalProperties" : true
+        }
+      }
+    },
+    "loadingOverlay": {
+      "type": "boolean",
+      "description": "Enable/disable report loading overlay",
+      "default": true
+    },
+
+    "showTitle": {
+      "type": "boolean",
+      "description": "Option to show/hide Ad Hoc view title",
+      "default": true
+    },
+
+    "params": {
+      "type": "object",
+      "description": "Ad Hoc View's parameters values",
+      "additionalProperties": {
+        "type": "array"
+      }
+    }
+  },
+  "required": ["server", "resource"]
+}

@@ -1,0 +1,46 @@
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<ehcache name="aggregateCache"  maxBytesLocalHeap="100M"
+         maxBytesLocalDisk="500M">
+
+    <!-- where to store cache items if disk store is enabled (it's disabled by default)
+		ehcache.disk.store.dir is the name of a system property set by the sysProperties bean in applicationContext.xml.
+		It points to the same path as the java.io.tmpdir system property by default.
+	 -->
+    <diskStore path="${ehcache.disk.store.dir}/aggregateCache"/>
+
+	<defaultCache maxElementsInMemory="10000" eternal="false"
+		overflowToDisk="true" timeToIdleSeconds="120" timeToLiveSeconds="120"
+		diskPersistent="false" diskExpiryThreadIntervalSeconds="120" />
+
+    <cache name="treeNodeCache"
+           timeToIdleSeconds="0"
+           timeToLiveSeconds="0"
+           overflowToDisk="false"
+           diskPersistent="false"
+           statistics="true" >
+        <pinning store="localMemory" />
+    </cache>
+
+
+    <cache name="aggregateColumnCache"
+           timeToIdleSeconds="0"
+           timeToLiveSeconds="0"
+           overflowToDisk="false"
+           diskPersistent="false"
+           statistics="true" >
+        <pinning store="localMemory" />
+        <searchable>
+            <searchAttribute name="cacheID" expression="value.getCacheID()"/>
+        </searchable>
+    </cache>
+
+   <!-- <cache name="mapCache"
+           overflowToDisk="true"
+           diskPersistent="true"
+           statistics="true" >
+    </cache>
+-->
+</ehcache>

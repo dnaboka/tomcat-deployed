@@ -1,0 +1,1 @@
+define({root:"root",resource:"resource",resources:"resources",folder:"folder",workflow:"workflow",workflows:"workflows",edit:"edit",run:"run",open:"open",create:"create",serverSetting:"serverSettings",admin:"admin",contentReference:"contentReference",contentReferences:"contentReferences"});

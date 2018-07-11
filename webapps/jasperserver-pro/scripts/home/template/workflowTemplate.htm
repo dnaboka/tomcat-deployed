@@ -1,0 +1,28 @@
+<li class="workflow">
+    <div class="workflow-container">
+        <div class="workflow-icon-{{- name.toLowerCase() }}"></div>
+        <h2 class="workflow-title">{{- label }}</h2>
+        <p class="workflow-description">{{- description }}
+            {{ if (tutorialControl) { }}
+                <a href="{{- tutorialControl.entity.url }}" target="_blank" >
+                    {{- tutorialControl.label }}
+                </a>
+            {{ } }}
+        </p>
+    </div>
+    <div class="workflow-buttonContainer">
+
+        {{ if (leftControl) { }}
+            <button aria-label="{{- leftControl.label }} {{- label }}" class="button left" role="link">
+                {{- leftControl.label }}
+            </button>
+        {{ } }}
+
+        {{ if (rightControl) { }}
+            <button aria-label="{{- rightControl.label }} {{- label }}" class="button right" role="link">
+                {{- rightControl.label }}
+            </button>
+        {{ } }}
+
+    </div>
+</li>

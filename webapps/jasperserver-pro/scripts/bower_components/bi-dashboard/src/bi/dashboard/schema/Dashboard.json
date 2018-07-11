@@ -1,0 +1,80 @@
+{
+    "title": "Dashboard Properties",
+    "type": "object",
+    "description": "JSON Schema describing Dashboard Properties",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "properties": {
+        "server": {
+            "type": "string",
+            "description": "URL of JRS instance"
+        },
+        "resource": {
+            "type": "string",
+            "description": "Dashboard resource URI"
+        },
+        "container": {
+            "oneOf": [
+                {
+                    "type": "object",
+                    "additionalProperties" : true,
+                    "description": "DOM element to render report to"
+                },
+                {
+                    "type": "string",
+                    "description": "CSS selector for container to render report to"
+                }
+            ]
+        },
+        "linkOptions": {
+            "type": "object",
+            "description": "Dashboard's parameters values",
+            "properties": {
+                "beforeRender": {
+                    "type": "function",
+                    "description": "A function to process link - link element pairs."
+                },
+                "events": {
+                    "type": "object",
+                    "description": "Backbone-like events object to be applied to JR links",
+                    "additionalProperties" : true
+                }
+            }
+        },
+        "params": {
+            "type": "object",
+            "description": "Dashboard parameter values",
+            "additionalProperties": {
+                "type": "array"
+            }
+        },
+        "report": {
+            "type": "object",
+            "description": "Properties for reports inside dashboard",
+            "additionalProperties": false,
+            "required": ["chart"],
+            "properties": {
+                "chart": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "description": "Properties of charts inside report",
+                    "properties": {
+                        "animation": {
+                            "type": "boolean",
+                            "description": "Enable/disable animation when report is rendered or resized. Disabling animation may increase performance in some cases. For now works only for Highcharts-based charts."
+                        },
+                        "zoom": {
+                            "enum": [false, "x", "y", "xy"],
+                            "description": "Control zoom feature of chart reports. For now works only for Highcharts-based charts."
+                        }
+                    }
+                },
+                "loadingOverlay": {
+                    "type": "boolean",
+                    "description": "Enable/disable report loading overlay",
+                    "default": true
+                }
+            }
+        }
+    },
+    "required": ["server", "resource"]
+}

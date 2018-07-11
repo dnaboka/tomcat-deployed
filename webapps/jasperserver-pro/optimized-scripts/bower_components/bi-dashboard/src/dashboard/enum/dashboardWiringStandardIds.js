@@ -1,0 +1,1 @@
+define({INIT_SIGNAL:"@init",REFRESH_SIGNAL:"@refresh",APPLY_SIGNAL:"@applyParams",REFRESH_SLOT:"@refresh",APPLY_SLOT:"@applyParams"});

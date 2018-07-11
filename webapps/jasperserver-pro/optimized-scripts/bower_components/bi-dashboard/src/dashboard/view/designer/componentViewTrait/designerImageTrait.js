@@ -1,0 +1,1 @@
+define(["require","underscore","../../base/componentViewTrait/imageTrait"],function(e){"use strict";var r=e("underscore"),n=e("../../base/componentViewTrait/imageTrait");return r.extend({},n,{_renderComponent:function(){var e=this.model.get("uri");this.component.render(e),this.trigger("componentRendered",this)}})});

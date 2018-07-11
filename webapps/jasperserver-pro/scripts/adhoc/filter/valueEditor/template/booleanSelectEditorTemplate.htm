@@ -1,0 +1,10 @@
+<fieldset class="values ">
+    <label class="control select">
+        <select class="" {{ if (multiple) { }}multiple="multiple"{{ } }}>
+        {{ _.each(options, function(option) { }}
+            <option value="{{- option.value }}" {{ if (option.selected) { }}selected="selected"{{ } }}>{{- option.label }}</option>
+        {{ }); }}
+        </select>
+        <span data-validation-field="value" class="message warning"></span>
+    </label>
+</fieldset>

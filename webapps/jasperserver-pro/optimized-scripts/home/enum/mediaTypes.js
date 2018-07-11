@@ -1,0 +1,1 @@
+define({APPLICATION_JSON:"application/json",APPLICATION_HAL_JSON:"application/hal+json",TEXT_HTML:"text/html"});

@@ -1,0 +1,1 @@
+define({ASC:"ASCENDING",DESC:"DESCENDING"});

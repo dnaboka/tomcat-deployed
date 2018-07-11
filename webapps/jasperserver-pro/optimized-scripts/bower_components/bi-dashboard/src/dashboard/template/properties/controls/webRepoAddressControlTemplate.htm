@@ -1,0 +1,13 @@
+<div class="section">
+    <label class="control url" data-bind="validationErrorClass:url">
+        <span class="wrap">{{- i18n['dashboard.dialog.image.component.url.label'] }}</span>
+        <div class="browsableInput">
+            <input name="url" data-bind="value:url,events:['input']" type="text" data-jrs-parameterized-input/>
+            <button class="button action showRepositoryChooserFileDialog">
+                <span class="wrap">{{- i18n["dashboard.component.dialog.properties.hyperlinks.browse.repository"] }}<span class="icon"></span></span>
+            </button>
+        </div>
+        <span class="message hint">{{- i18n['dashboard.dialog.image.component.repo.advice'] }}</span>
+        <span class="message warning" data-bind="validationErrorText:url"></span>
+    </label>
+</div>

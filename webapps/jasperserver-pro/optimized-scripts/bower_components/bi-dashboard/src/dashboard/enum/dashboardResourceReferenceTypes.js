@@ -1,0 +1,1 @@
+define({FILE:"file",REPORT:"ClientReportUnit",ADHOC_VIEW:"ClientAdhocDataView",INPUT_CONTROL:"inputControl",RESOURCE_REFERENCE:"resourceReference"});

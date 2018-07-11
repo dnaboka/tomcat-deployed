@@ -1,0 +1,1 @@
+define({COMPONENTS:"components",WIRING:"wiring",LAYOUT:"layout"});

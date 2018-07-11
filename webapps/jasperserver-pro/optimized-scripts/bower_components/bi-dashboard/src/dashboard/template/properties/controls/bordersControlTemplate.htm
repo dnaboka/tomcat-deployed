@@ -1,0 +1,20 @@
+<div class="section">
+    <label class="control checkBox">
+        <span class="wrap">{{-i18n["dashboard.dialog.properties.dashlet.borders"]}}</span>
+        <input name="showDashletBorders" data-bind="checked:showDashletBorders" type="checkbox"/>
+        <span class="message warning"></span>
+    </label>
+
+    <div class="group" data-bind="slide:showDashletBorders">
+        <p>{{-i18n["dashboard.dialog.properties.dashlet.border.color"]}}</p>
+
+        <div class="buttonColorpicker"
+             data-bind="colorpicker:borderColor"
+             data-show-transparent-input="true">
+            <div class="buttonColorpicker-swatch colorIndicator"></div>
+            <div class="buttonColorpicker-trigger">
+                <span class="buttonColorpicker-trigger-icon"></span>
+            </div>
+        </div>
+    </div>
+</div>

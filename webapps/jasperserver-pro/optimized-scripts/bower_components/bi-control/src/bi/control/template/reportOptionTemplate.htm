@@ -1,0 +1,10 @@
+<div>
+    <label class="control select" for="reportOptionsSelect" title="{{title}}">
+        <span class="wrap">{{label}}</span>
+        <select id="reportOptionsSelect">
+            {{#data}}
+            <option value="{{id}}" {{#selected}}selected="selected"{{/selected}}>{{label}}</option>
+            {{/data}}
+        </select>
+    </label>
+</div>

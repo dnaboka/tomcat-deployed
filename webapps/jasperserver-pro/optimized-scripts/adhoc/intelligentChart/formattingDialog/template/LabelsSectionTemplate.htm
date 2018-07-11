@@ -1,0 +1,52 @@
+<div class="group">
+    <!--Is not needed in Amber release. Uncomment if needed-->
+    <!--
+    <div class="control checkBox">
+        <label for="singleAxisComboChart">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_SINGLE_AXIS_COMBO_CHART
+            }}</label>
+        <input id="singleAxisComboChart" name="singleAxisComboChart" type="checkbox"/>
+    </div>
+    <div class="control">
+        <label for="donnutInnerSize">
+            {{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_DONNUT_INNER_SIZE }}
+            <input id="donnutInnerSize" name="donnutInnerSize" type="text"/>
+        </label>
+    </div>
+    -->
+    <div class="groupName">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_GROUP_LEGEND }}</div>
+    <div class="control">
+        <label for="legend">
+            {{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_LEGEND_POSITION }}
+            <select id="legend" name="legend">
+                <option value="bottom" selected>{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_LEGEND_POSITION_BOTTOM }}</option>
+                <option value="top">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_LEGEND_POSITION_TOP }}</option>
+                <option value="right">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_LEGEND_POSITION_RIGHT }}</option>
+                <option value="left">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_LEGEND_POSITION_LEFT }}</option>
+                <option value="none">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_LEGEND_POSITION_NONE }}</option>
+            </select>
+        </label>
+    </div>
+    <div class="control checkBox">
+        <label for="legendBorder">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_SHOW_LEGEND_BORDER }}</label>
+        <input id="legendBorder" name="legendBorder" type="checkbox" value="true"/>
+    </div>
+</div>
+<div class="group">
+    <div class="groupName">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_GROUP_MEASURES }}</div>
+    <div class="control checkBox">
+        <label for="showSingleMeasuresLabels">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_SHOW_SINGLE_MEASURE_LABELS
+            }}</label>
+        <input id="showSingleMeasuresLabels" name="showSingleMeasuresLabels" type="checkbox"/>
+    </div>
+    <div class="control checkBox child">
+        <input id="showMeasureOnValueAxis" name="showMeasureOnValueAxis" type="checkbox" value="true"/>
+        <label for="showMeasureOnValueAxis">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_SHOW_MEASURE_NAME }}</label>
+    </div>
+    </div>
+<div class="group">
+    <div class="groupName">{{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_GROUP_GENERAL }}</div>
+    <div class="control checkBox">
+        <label for="autoScaleFonts"> {{- i18n.ADH_1214_ICHARTS_CHART_FORMAT_DIALOG_AUTO_SCALE_LABEL_FONT_SIZE }}</label>
+        <input id="autoScaleFonts" name="autoScaleFonts" type="checkbox" value="true"/>
+    </div>
+</div>

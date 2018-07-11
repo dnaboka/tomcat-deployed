@@ -1,0 +1,39 @@
+{
+    "type": "object",
+    "properties": {
+        "server": {
+            "type": "string",
+            "description": "Url to JRS instance."
+        },
+        "resource": {
+            "type": "string",
+            "description": "URI of resource with input controls."
+        },
+        "params": {
+            "type": "object",
+            "description": "Parameters for input controls.",
+            "additionalProperties": {
+                "type": "array"
+            }
+        },
+        "container": {
+            "oneOf": [{
+                "type": "string"
+            }, {
+                "type": "object"
+            }],
+            "description": "Container element id or DOM element to render input controls UI"
+        },
+        "events": {
+            "$ref": "#/definitions/eventsMapper",
+            "description": "Attach event listeners to component",
+            "properties": {
+                "change": {
+                    "type": "function",
+                    "description": "Function to be called each time user changes input control"
+                }
+            }
+        }
+    },
+    "required": ["server", "resource"]
+}

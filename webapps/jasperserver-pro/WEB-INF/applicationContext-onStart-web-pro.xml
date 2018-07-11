@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
+
+    <!--
+      proOnStartPropagator makes sure themes are in sync according to the theme inheritance.
+      It is commented out by default because performance is too bad with high multi tenant environment
+      due to hibernate issues when dealing with 10s-thousand entities in the session scope
+      (org.hibernate.intercept.FieldInterceptionHelper.extractFieldInterceptor takes enormous time)
+    -->
+    <bean id="proOnStartPropagator" class="com.jaspersoft.ji.war.themes.MTThemeOnStartPropagator" lazy-init="false">
+        <property name="mtThemePropagator" ref="proThemePropagator" />
+        <property name="tenantService" ref="${bean.hibernateTenantService}" />
+        <property name="repositoryService" ref="unsecureRepositoryService" />
+        <property name="configurationBean" ref="configurationBean" />
+        <property name="objectPermissionService" ref="${bean.objectPermissionServiceInternal}" />
+        <property name="transactionManager" ref="transactionManager" />
+    </bean>
+
+    <bean id="adhocUpgradeListener" class="com.jaspersoft.ji.adhoc.export.listeners.AdhocUpgradeListener">
+        <property name="adhocUpgradeExecutor" ref="adhocUpgradeExecutor"/>
+    </bean>
+</beans>

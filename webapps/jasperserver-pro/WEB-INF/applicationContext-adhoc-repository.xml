@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
+    <alias alias="easyXMLizedRepository" name="mtRepositoryService"/>
+	<!--  add this to mtRepositoryService interceptors 
+    <bean id="easyXMLizedRepository" class="org.springframework.aop.framework.ProxyFactoryBean">
+        <property name="interceptorNames">
+            <list>
+                <idref local="adhocEasyXMLizer"/>
+                <idref bean="mtRepositoryService"/>
+            </list>
+        </property>
+    </bean>
+    -->
+
+    <!-- the interceptor that handles easyXML persistence of state -->
+    <bean id="adhocEasyXMLizer" class="com.jaspersoft.ji.adhoc.service.EasyXMLizer">
+    	<!-- skip down to bottom level repository because we are now part of a chain -->
+        <property name="repositoryService" ref="hibernateRepositoryService"/>
+        <property name="adhocEngine" ref="adhocEngineService"/>
+        <property name="pathTransformer" ref="repositoryPathTransformer"/>
+     <!--   <property name="adhocMetadataFactory" ref="adhocMetadataFactory"/> -->
+        <property name="easyXML">
+            <bean class="com.jaspersoft.commons.xml.EasyXML">
+                <!-- map from element names to class names or bean template names -->
+                <property name="elementToClassMap">
+                    <map>
+                        <entry key="tableState" value="com.jaspersoft.ji.adhoc.AdhocTableState"/>
+                        <entry key="group" value="com.jaspersoft.ji.adhoc.AdhocGroup"/>
+                        <entry key="queryDimension" value="com.jaspersoft.ji.adhoc.AdhocQueryDimension"/>
+                        <entry key="column" value="com.jaspersoft.ji.adhoc.AdhocColumn"/>
+                        <entry key="spacer" value="com.jaspersoft.ji.adhoc.AdhocColumnSpacer"/>
+                        <entry key="artificial" value="com.jaspersoft.ji.adhoc.AdhocArtificialColumn"/>
+                        <entry key="sortField" value="com.jaspersoft.ji.adhoc.AdhocTableSortField"/>
+                        <entry key="chartState" value="com.jaspersoft.ji.adhoc.AdhocChartState"/>
+                        <entry key="crosstabState" value="com.jaspersoft.ji.adhoc.AdhocCrosstabState"/>
+
+                        <!-- (Angus) new stuff for unified state-->
+                        <entry key="unifiedState">
+                            <bean class="com.jaspersoft.commons.xml.ClassMapping">
+                                <property name="elementName" value="unifiedState" />
+                                <property name="beanName" value="adhocUnifiedStateTemplate" />
+                                <property name="fullClassName" value="com.jaspersoft.ji.adhoc.AdhocUnifiedState" />
+                            </bean>
+                        </entry>
+                        <entry key="chartState" value="com.jaspersoft.ji.adhoc.ChartStateDelegate"/>
+                        <entry key="crosstabState" value="com.jaspersoft.ji.adhoc.CrosstabStateDelegate" />
+                        <entry key="intelligentChartState">
+                            <bean class="com.jaspersoft.commons.xml.ClassMapping">
+                                <property name="elementName" value="intelligentChartState" />
+                                <property name="beanName" value="iChartStateDelegateTemplate" />
+                                <property name="fullClassName" value="com.jaspersoft.ji.adhoc.IntelligentChartStateDelegate" />
+                            </bean>
+                        </entry>
+                        <entry key="measure" value="com.jaspersoft.ji.adhoc.AdhocColumn"/>
+                        <entry key="crosstabRowGroup" value="com.jaspersoft.ji.adhoc.AdhocGroup"/>
+                        <entry key="crosstabColumnGroup" value="com.jaspersoft.ji.adhoc.AdhocGroup"/>
+                        <!-- (Bob) maintenance of filter state -->
+                        <entry key="subFilter" value="com.jaspersoft.ji.adhoc.strategy.SubFilter"/>
+                        <!-- Axis sort/filter state-->
+                        <entry key="sortingState" value="com.jaspersoft.ji.adhoc.CrosstabSortingState" />
+                        <!-- for chart state -->
+                        <entry key="advancedChartProperty" value="com.jaspersoft.ji.adhoc.AdvancedChartProperty" />
+                        <entry key="sortAxisByMeasure" value="com.jaspersoft.commons.dimengine.axistransform.SortAxisByMeasure"/>
+                        <entry key="topOrBottomN" value="com.jaspersoft.commons.dimengine.axistransform.TopOrBottomN"/>
+                        <entry key="sortAxisByHeader" value="com.jaspersoft.commons.dimengine.axistransform.SortAxisByHeader"/>
+                        <entry key="multiTransform" value="com.jaspersoft.commons.dimengine.axistransform.MultiTransform"/>
+                    </map>
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+	<!-- set up ReportDataSource machinery for AdhocDataView -->
+    <bean id="adhocDataSourceDefinition" class="com.jaspersoft.jasperserver.api.engine.jasperreports.util.DataSourceServiceDefinition">
+        <property name="dataSourceInterface" value="com.jaspersoft.ji.adhoc.AdhocDataView"/>
+        <property name="serviceBeanName" value="adhocDataSourceServiceFactory"/>
+    </bean>
+
+    <bean id="adhocDataSourceServiceFactory" class="com.jaspersoft.ji.adhoc.datasource.AdhocDataSourceServiceFactory">
+        <property name="metadataFactory" ref="adhocMetadataFactory"/>
+        <property name="serviceBeanName" value="adhocDataSourceService"/>
+    </bean>
+
+    <!-- need separate instances of data source service -->
+    <bean scope="prototype" id="adhocDataSourceService" class="com.jaspersoft.ji.adhoc.datasource.AdhocDataSourceService">
+    	<property name="dataStrategyService" ref="adhocEngineService"/>
+    	<property name="adhocEngine" ref="adhocEngineService"/>
+		<property name="intelligentChartJsonConverter">
+			<!-- FIXME this duplicates the bean from jasperserver-servlet-pro.xml -->
+			<bean class="com.jaspersoft.ji.adhoc.converter.AdhocIntelligentChartToJsonStreamingConverter" />
+		</property>
+        <property name="inputControlsInfoExtractor" ref="inputControlsInfoRoutingExtractor"/>
+        <property name="adhocParamUtils" ref="adhocParamUtils"/>
+    </bean>
+
+    <bean id="adhocParamUtils" class="com.jaspersoft.ji.adhoc.util.AdhocParamUtils">
+        <property name="inputControlsInfoExtractor" ref="inputControlsInfoRoutingExtractor"/>
+    </bean>
+
+    <bean id="inputControlBuilder" class="com.jaspersoft.ji.semantic.service.InputControlBuilder">
+        <property name="repository" ref="${bean.repositoryService}"/>
+        <property name="semanticLayerFactory" ref="semanticLayerFactory"/>
+        <property name="slConfig" ref="slConfig"/>
+        <property name="engineService" ref="engineService"/>
+        <property name="objectTypeMapper" ref="objectTypeMapper"/>
+    </bean>
+    
+        <!-- bean updaters to update central configs in applicationContext.xml
+         (replacing use of tweakWar.js and its source files in jasperserver-war/warUpdates
+      -->
+
+    <!-- Hibernate config files -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="addHibernateConfig"/>
+        <property name="value">
+            <list>
+                <value>/com/jaspersoft/ji/adhoc/AdhocReportUnit.hbm.xml</value>
+                <value>/com/jaspersoft/ji/adhoc/AdhocState.hbm.xml</value>
+                <value>/com/jaspersoft/ji/adhoc/DashboardResource.hbm.xml</value>
+                <value>/com/jaspersoft/ji/adhoc/RepoDashboardModelResource.hbm.xml</value>
+                <value>/com/jaspersoft/ji/adhoc/AdhocDataView.hbm.xml</value>
+            </list>
+        </property>
+        <property name="valueType" value="stringList"/>
+    </bean>
+
+    <!-- client class mapping -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="mapClientClass"/>
+        <property name="value">
+            <map>
+                <entry key="com.jaspersoft.ji.adhoc.AdhocReportUnit"
+                       value="com.jaspersoft.ji.adhoc.AdhocReportUnitImpl"/>
+                <entry key="com.jaspersoft.ji.dashboard.DashboardModelResource"
+                       value="com.jaspersoft.ji.dashboard.DashboardModelResource"/>
+                <entry key="com.jaspersoft.ji.adhoc.DashboardResource"
+                       value="com.jaspersoft.ji.adhoc.DashboardResourceImpl"/>
+                <entry key="com.jaspersoft.ji.adhoc.AdhocDataView"
+                       value="com.jaspersoft.ji.adhoc.AdhocDataViewImpl"/>
+            </map>
+        </property>
+        <property name="valueType" value="stringMap"/>
+    </bean>
+
+    <!-- repo class mapping -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="mapRepoClass"/>
+        <property name="value">
+            <map>
+                <entry key="com.jaspersoft.ji.adhoc.AdhocReportUnit"
+                       value="com.jaspersoft.ji.adhoc.hibernate.RepoAdhocReportUnit"/>
+                <entry key="com.jaspersoft.ji.adhoc.DashboardResource"
+                       value="com.jaspersoft.ji.adhoc.hibernate.RepoDashboardResource"/>
+                <entry key="com.jaspersoft.ji.dashboard.DashboardModelResource"
+                       value="com.jaspersoft.ji.adhoc.hibernate.RepoDashboardModelResource"/>
+                <entry key="com.jaspersoft.ji.adhoc.AdhocDataView"
+                       value="com.jaspersoft.ji.adhoc.hibernate.RepoAdhocDataView"/>
+                
+            </map>
+        </property>
+        <property name="valueType" value="stringMap"/>
+    </bean>
+
+    <!-- fix crosstabs from ad hoc views which have out-of-date labels -->
+    <bean class="com.jaspersoft.jasperserver.api.common.util.spring.GenericBeanUpdater">
+        <property name="definition" ref="addJRXMLFixer"/>
+        <property name="value" value="adhocCrosstabJRXMLFixer"/>
+        <property name="valueType" value="idRefList"/>
+    </bean>
+
+    <bean id="adhocCrosstabJRXMLFixer" class="com.jaspersoft.ji.adhoc.jr.AdhocCrosstabJRXMLFixer"/>
+
+    <bean id="proOlapReportCheckUtil"
+        class="com.jaspersoft.ji.adhoc.util.ProOlapReportCheckUtil">
+        <property name="repositoryService" ref="easyXMLizedRepository"/>
+        <property name="adhocEasyXMLizer" ref="adhocEasyXMLizer"/>
+    </bean>
+
+    <bean id="adhocReferenceDetectionService" class="com.jaspersoft.ji.adhoc.service.impl.AdhocReferenceDetectionServiceImpl">
+        <property name="repositoryService" ref="${bean.repositoryService}"/>
+        <property name="searchCriteriaFactory" ref="searchCriteriaFactory"/>
+        <property name="sessionFactory" ref="sessionFactory"/>
+    </bean>
+
+    <bean id="adhocUpgradeExecutor" class="com.jaspersoft.ji.adhoc.export.impl.AdhocUpgradeExecutorImpl">
+        <property name="repositoryService" ref="${bean.repositoryService}"/>
+        <property name="searchCriteriaFactory" ref="searchCriteriaFactory"/>
+        <property name="externalUserService" ref="${bean.userAuthorityService}"/>
+        <property name="adhocEngineService" ref="adhocEngineService"/>
+        <property name="dataViewService" ref="adhocDataViewService"/>
+        <property name="adhocReferenceDetectionService" ref="adhocReferenceDetectionService"/>
+        <property name="reportOptionsService" ref="reportOptionsService"/>
+        <property name="reportLoadingService" ref="${bean.reportLoadingService}"/>
+        <property name="messageSource" ref="messageSource"/>
+        <property name="pathTransformer" ref="pathTransformer"/>
+
+        <!--
+            By default, the threadsNumber property is set to 1 which means that the upgrade is processed serially.
+            If you are converting a large number of Ad Hoc reports during upgrade, you can speed up the process by
+            setting threadsNumber to a value greater than 1. In this case, the upgrade is performed in parallel.
+            The number of threads should not be greater than the max number of active JDBC connections in the pool
+            (default = 10). Otherwise the upgrade may hang.
+
+            A  deadlock error may be logged when a parallel upgrade is performed (threadsNumber > 1). The upgrade
+            process will attempt to recover from this error by saving the resource after a wait interval (up to 5
+            attempts).
+
+            Each retry attempt is logged, with message similar to the following:
+            "Could not lock the resource. Will retry. Attempt number 1. Time to wait 149ms"
+
+            Seeing this error in the log does not necessarily mean the upgrade has failed, as it can succeed on a
+            subsequent attempt.
+
+            Your upgrade has been successful if you see the following message at the end of upgrade:
+            "Upgrade process for AdhocReportUnit objects completed successfully."
+        -->
+        <property name="threadsNumber" value="1"/>
+
+        <property name="maxResults" value="100"/>
+        <property name="controlLogicCacheManager" ref="controlLogicCacheManager"/>
+    </bean>
+</beans>

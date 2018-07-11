@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:util="http://www.springframework.org/schema/util"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd
+       http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd">
+
+
+	<bean id="mtAuthenticationProcessingFilter" parent="authenticationProcessingFilter"
+            class="com.jaspersoft.jasperserver.api.security.EncryptionAuthenticationProcessingFilter">
+        <property name="authenticationDetailsSource">
+        	<bean class="org.springframework.security.authentication.AuthenticationDetailsSourceImpl">
+        		<property name="clazz">
+        			<value>com.jaspersoft.jasperserver.multipleTenancy.MTWebAuthenticationDetails</value>
+        		</property>
+        	</bean>
+        </property>
+    </bean>
+	
+    <bean id="mtPortletAuthenticationProcessingFilter" parent="portletAuthenticationProcessingFilter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.MTJIPortletAuthenticationProcessingFilter">
+        <property name="tenantService" ref="${bean.tenantService}"/>
+        <property name="multiTenancyService" ref="internalMultiTenancyFacade"/>
+        <property name="mtUserAuthorityService" ref="${bean.internalUserAuthorityService}"/>
+        <property name="mtUserDetailsService" ref="${bean.internalUserAuthorityService}"/>
+        <property name="portletOrganizationId" value="portal"/>
+    </bean>
+
+    <bean id="mtBasicProcessingFilter" parent="basicProcessingFilter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.MTBasicProcessingFilter">
+        <property name="tenantService" ref="${bean.hibernateTenantService}"/>
+        <property name="portletOrganizationId">
+            <util:property-path path="mtPortletAuthenticationProcessingFilter.portletOrganizationId"/>
+        </property>
+    </bean>
+
+    <bean id="mtPasswordExpirationProcessingFilter" parent="passwordExpirationProcessingFilter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.MTPasswordExpirationProcessingFilter">
+        <property name="mtUserAuthorityService" ref="${bean.internalUserAuthorityService}"/>
+    </bean>
+
+    <bean id="mtUserPreferencesFilter" parent="userPreferencesFilter"
+          class="com.jaspersoft.jasperserver.multipleTenancy.MTUserPreferencesFilter">
+        <property name="mtUserAuthorityService" ref="${bean.internalUserAuthorityService}"/>
+    </bean>
+</beans>

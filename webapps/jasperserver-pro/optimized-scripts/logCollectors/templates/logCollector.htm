@@ -1,0 +1,24 @@
+<tr class="collectorColumns" status="{{- status.toLowerCase() }}">
+	<td class="cOne">{{- name }}</td>
+	<td class="cTwo" title="{{- userId }}">{{- userId }}</td>
+	<td class="cThree">
+		{{ if (status.toLowerCase() === collectorStatusEnum.RUNNING.toLowerCase()) { }}
+			<select name="verbosity">
+				<option value="low" {{ if (verbosity.toLowerCase() === "low") { }} selected {{ } }} >{{- i18n["logCollectors.form.low"] }}</option>
+				<option value="medium" {{ if (verbosity.toLowerCase() === "medium") { }} selected {{ } }} >{{- i18n["logCollectors.form.medium"] }}</option>
+				<option value="high" {{ if (verbosity.toLowerCase() === "high") { }} selected {{ } }} >{{- i18n["logCollectors.form.high"] }}</option>
+			</select>
+		{{ } else { }}
+			<span name="verbosity">
+			{{- i18n["logCollectors.form." + verbosity.toLowerCase()] }}
+			</span>
+		{{ } }}
+	</td>
+	<td class="cFour">{{ if (includeDataSnapshot === true) { }} {{- i18n["logCollectors.list.yes"] }} {{ } else { }} {{- i18n["logCollectors.list.no"] }} {{ } }}</td>
+	<td class="cFive" name="status">{{- i18n["logCollectors.list.status." + status.toLowerCase()] }}</td>
+	<td class="cSix actionIcons" name="icons">
+		<div name="stopIcon" class="stop {{- status.toLowerCase() }}"></div>
+		<div name="downloadIcon" class="download {{ if (status.toLowerCase() !== collectorStatusEnum.STOPPED.toLowerCase()) { }} notAvailable {{ } }}"></div>
+		<div name="deleteIcon" class="remove {{ if (status.toLowerCase() === collectorStatusEnum.SHUTTING_DOWN.toLowerCase()) { }} notAvailable {{ } }}"></div>
+	</td>
+</tr>

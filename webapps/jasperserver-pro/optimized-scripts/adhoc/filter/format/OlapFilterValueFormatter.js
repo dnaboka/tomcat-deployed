@@ -1,0 +1,1 @@
+define(["require","underscore"],function(e){"use strict";var r=e("underscore"),t=/(\[[\w\s.-]+\]\.){2}/,i=/(\[[\w\s.-]+\]\.){1}/,n=/\]\.\[/g,c=/^\[([^\]]+)\]$/g,o=function(e){r.bindAll(this,"format"),this.dimNamePrefixRegexp=e?t:i};return r.extend(o.prototype,{format:function(e){return e=e.replace(this.dimNamePrefixRegexp,""),e=e.replace(n," - "),e=e.replace(c,"$1")}}),o});

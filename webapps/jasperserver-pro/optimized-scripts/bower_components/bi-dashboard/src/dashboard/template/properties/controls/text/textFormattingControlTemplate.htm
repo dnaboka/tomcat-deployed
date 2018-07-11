@@ -1,0 +1,101 @@
+<div class="section">
+    <div class="text-visualization">
+        <div class="fontProperty">
+            <span class="wrap title">{{-i18n["dashboard.dialog.properties.text.font"]}}</span>
+            <label class="control" data-bind="validationErrorClass:font">
+                <input name="font" data-bind="value:font" type="text"/>
+            </label>
+            <label class="control">
+                <select name="font" data-bind="value:font" size="6">
+                    {{_.each(options.fonts, function(fontTypeValue, fontTypeKey){ }}
+                    <option value="{{- fontTypeValue }}">{{- fontTypeValue }}</option>
+                    {{ }) }}
+                </select>
+            </label>
+        </div>
+        <div class="sizeProperty">
+            <span class="wrap title">{{-i18n["dashboard.dialog.properties.text.font.size"]}}</span>
+            <label class="control" data-bind="validationErrorClass:size">
+                <input name="size" data-bind="disabled:fitToDashlet,value:integer(size)" type="text"/>
+            </label>
+            <label class="control">
+                <select name="size" data-bind="disabled:fitToDashlet,value:integer(size)" size="6">
+                    {{ _.each(options.fontSizes, function(n){ }}
+                    <option value="{{- n }}">{{- n }}</option>
+                    {{ }) }}
+                </select>
+            </label>
+        </div>
+        <div class="styleProperties">
+            <span class="wrap title">{{-i18n["dashboard.dialog.properties.text.font.style"]}}</span>
+            <span class="control">
+                <div class="buttons">
+                    <div class="textInputButton" data-bind="checkboxDiv:bold">
+                        <span class="textIcon textBold checkboxChild"></span>
+                    </div>
+                    <div class="textInputButton" data-bind="checkboxDiv:italic">
+                        <span class="textIcon textItalic checkboxChild"></span>
+                    </div>
+                    <div class="textInputButton" data-bind="checkboxDiv:underline">
+                        <span class="textIcon textUnderline checkboxChild"></span>
+                    </div>
+                </div>
+            </span>
+            <span class="wrap title">{{-i18n["dashboard.component.dialog.properties.alignment"]}}</span>
+            <span class="control">
+                <div class="buttons">
+                    <div class="textInputButton checked" data-bind="radioDiv:alignment" data-value="left">
+                        <span class="textIcon textALeft checked radioChild"></span>
+                    </div>
+                    <div class="textInputButton" data-bind="radioDiv:alignment" data-value="center">
+                        <span class="textIcon textACenter radioChild"></span>
+                    </div>
+                    <div class="textInputButton" data-bind="radioDiv:alignment" data-value="right">
+                        <span class="textIcon textARight radioChild"></span>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <div class="textInputButton checked" data-bind="radioDiv:verticalAlignment" data-value="top">
+                        <span class="textIcon textATop checked radioChild"></span>
+                    </div>
+                    <div class="textInputButton" data-bind="radioDiv:verticalAlignment" data-value="middle">
+                        <span class="textIcon textAMiddle radioChild"></span>
+                    </div>
+                    <div class="textInputButton" data-bind="radioDiv:verticalAlignment" data-value="bottom">
+                        <span class="textIcon textABottom radioChild"></span>
+                    </div>
+                </div>
+            </span>
+
+            <label class="control">
+                <span class="title wrap">{{- i18n["dashboard.component.text.color.picker.background.color"]}}</span>
+                <div class="buttonColorpicker"
+                     data-bind="colorpicker:backgroundColor"
+                     data-show-transparent-input="true">
+                    <div class="buttonColorpicker-swatch colorIndicator"></div>
+                    <div class="buttonColorpicker-trigger">
+                        <span class="buttonColorpicker-trigger-icon"></span>
+                    </div>
+                </div>
+            </label>
+
+            <label class="control">
+                <span class="title wrap">{{- i18n["dashboard.component.text.color.picker.font.color"]}}</span>
+                <div class="buttonColorpicker"
+                     data-bind="colorpicker:color"
+                     data-show-transparent-input="true">
+                    <div class="buttonColorpicker-swatch colorIndicator"></div>
+                    <div class="buttonColorpicker-trigger">
+                        <span class="buttonColorpicker-trigger-icon"></span>
+                    </div>
+                </div>
+            </label>
+        </div>
+    </div>
+    <label data-bind="validationErrorClass:font" class="bottomError">
+        <span class="message warning" data-bind="validationErrorText:font"></span>
+    </label>
+    <label data-bind="validationErrorClass:size" class="bottomError">
+        <span class="message warning" data-bind="validationErrorText:size"></span>
+    </label>
+</div>

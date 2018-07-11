@@ -1,0 +1,6 @@
+<div class="jr-mInput jr-mInputControlSingleValueNumber jr">
+    <label class="jr-mInput-label {{#mandatory}} jr-mInput-labelRequired {{/mandatory}} jr" for="{{uuid}}">{{label}}</label>
+    <!--TODO: switch to type='number' JRS-9062 -->
+    <input class="jr-mInput-number jr" type="text" id="{{uuid}}" {{#readOnly}}disabled="disabled"{{/readOnly}} />
+    <span class="jr-mInput-alert jr jr-isInvisible">{{message}}</span>
+</div>

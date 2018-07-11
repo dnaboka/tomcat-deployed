@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.1.xsd">
+
+    <bean id="demoUserTestService" class="com.jaspersoft.ji.war.action.DemoUserTestService">
+        <property name="repository" ref="${bean.repositoryService}"/>
+        <property name="resourcePrefixForRootUser" value="/organizations/organization_1"/>
+        <property name="demoHomeResource" value="/public/Samples/Dashboards/1._Supermart_Dashboard"/>
+    </bean>
+</beans>

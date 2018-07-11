@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  ~ Copyright © 2005 - 2018 TIBCO Software Inc. All Rights Reserved. Confidential & Proprietary.
+  -->
+
+<beans:beans xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:amq="http://activemq.apache.org/schema/core"
+             xsi:schemaLocation="http://www.springframework.org/schema/beans
+			http://www.springframework.org/schema/beans/spring-beans.xsd
+			http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core-5.9.0.xsd">
+<!--
+    NetworkConnectors - destinations, this broker can connect to.
+    TransportConnectors - how others can connect to this broker
+
+    Internal ActiveMQ server
+    uncoment blocks down below to start using it
+-->
+
+<!--
+    <beans:bean id="connectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <beans:property name="targetConnectionFactory">
+            <beans:bean class="org.apache.activemq.ActiveMQConnectionFactory">
+                <beans:property name="brokerURL" value="vm://localhost/first"/>
+            </beans:bean>
+        </beans:property>
+        <beans:property name="sessionCacheSize" value="10"/>
+    </beans:bean>
+
+        <amq:broker useLocalHostBrokerName="true" id="broker-1">
+        <amq:networkConnectors>
+            <amq:networkConnector name="connectionToOtherNodes" duplex="true" >
+                <amq:discoveryAgent>
+                    <beans:ref bean="AwsSQSBasedDiscoveryAgent"/>
+                </amq:discoveryAgent>
+            </amq:networkConnector>
+        </amq:networkConnectors>
+
+        <amq:transportConnectors>
+            <amq:transportConnector name="connectionFromOtherNodes" uri="tcp://0.0.0.0:61616"/>
+        </amq:transportConnectors>
+    </amq:broker>
+
+
+    <beans:bean id="CredentialsProviderBean" class="com.amazonaws.auth.DefaultAWSCredentialsProviderChain"/>
+
+    <beans:bean id="sqsEndpoint" class="java.lang.String">
+        <beans:constructor-arg value="#{'sqs.'.concat(AutodetectBrokerInfo.brokerInfo.region)}"/>
+    </beans:bean>
+    <beans:bean id="ConnectionFactoryBuilder" class="com.amazon.sqs.javamessaging.SQSConnectionFactory$Builder">
+        <beans:property name="endpoint" ref="sqsEndpoint"/>
+        <beans:property name="numberOfMessagesToPrefetch" value="20"/>
+        <beans:property name="awsCredentialsProvider" ref="CredentialsProviderBean"/>
+    </beans:bean>
+
+    <beans:bean id="SQSConnectionFactory" class="com.amazon.sqs.javamessaging.SQSConnectionFactory"
+                factory-bean="ConnectionFactoryBuilder"
+                factory-method="build" />
+
+    <beans:bean id="CachedSQSConnectionFactory" class="org.springframework.jms.connection.CachingConnectionFactory">
+        <beans:property name="targetConnectionFactory" ref="SQSConnectionFactory"/>
+    </beans:bean>
+
+    <beans:bean id="SQSConnection" class="javax.jms.Connection"
+          factory-bean="CachedSQSConnectionFactory"
+          factory-method="createConnection"
+          init-method="start"
+          destroy-method="close" />
+
+    <beans:bean id="QueueName" class="java.lang.String">
+        <beans:constructor-arg value="#{awsEc2MetadataClient2.getEc2UserDataProperty('queueName','unknownQueue')}"/>
+    </beans:bean>
+
+    <beans:bean name="AwsSQSBasedDiscoveryAgent" class="com.jaspersoft.ji.replication.discovery.JMSBasedDiscoveryAgent">
+        <beans:property name="connection" ref="SQSConnection"/>
+        <beans:property name="queueName" ref="QueueName"/>
+        <beans:property name="localBrokerInfo" value="#{AutodetectBrokerInfo.brokerInfo}"/>
+    </beans:bean>
+
+    <beans:bean name="AutodetectBrokerInfo" class="com.jaspersoft.ji.replication.discovery.AwsAutodetectBrokerInfo" init-method="init">
+        <beans:property name="fallBackBrokerInfo" ref="brokerDescription"/>
+        <beans:property name="port" value="61616"/>
+        <beans:property name="scheme" value="tcp"/>
+        <beans:property name="awsEc2MetadataClient" ref="awsEc2MetadataClient2"/>
+    </beans:bean>
+    <beans:bean id="awsEc2MetadataClient2" class="com.jaspersoft.jasperserver.api.engine.jasperreports.util.AwsEc2MetadataClient">
+        <beans:property name="awsRegions" ref="awsRegions"/>
+    </beans:bean>
+    <beans:bean name="brokerDescription" class="com.jaspersoft.ji.replication.discovery.BrokerInfo">
+        <beans:constructor-arg index="0" type="java.lang.String" value="brokerName"/>
+        <beans:constructor-arg index="1" type="java.lang.String" value="tcp://localhost:61616"/>
+    </beans:bean>
+
+-->
+</beans:beans>
